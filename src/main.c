@@ -5,7 +5,7 @@
 
 void print_indentation(int level) {
   for (int i = 0; i < level; i++) {
-    printf(" ");
+    printf("  ");
   }
 }
 
@@ -20,8 +20,10 @@ char consume_while_white(FILE *stream) {
 
 void consume_until_char(FILE *stream, char end) {
   char c;
-  while ((c = fgetc(stream)) == end) {
+  while ((c = fgetc(stream)) != end) {
+    printf("%c", c);
   };
+  printf("%c", end);
 }
 
 bool is_char_any_of(char c, size_t len, char possibles[]) {
@@ -51,9 +53,14 @@ int main(int argc, const char *argv[]) {
   int indentation_level = 0;
   while ((c = fgetc(f)) != EOF) {
     if (c == '\'') {
+      printf("%c", c);
       consume_until_char(f, '\'');
     } else if (c == '"') {
+      printf("%c", c);
       consume_until_char(f, '"');
+    } else if (c == '(') {
+      printf("%c", c);
+      consume_until_char(f, ')');
     } else if (is_char_any_of(c, 3, "{};")) {
       printf("\n");
       if (c == '{') {
@@ -63,9 +70,9 @@ int main(int argc, const char *argv[]) {
         indentation_level -= 1;
       }
       char c1 = consume_while_white(f);
-      printf("%c  ", c);
       print_indentation(indentation_level);
-      printf("%c", c1);
+      printf("%c  ", c);
+      c = c1;
     } else {
       printf("%c", c);
     }
