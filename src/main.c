@@ -134,9 +134,9 @@ int main(int argc, const char *argv[]) {
   fseek(f, 0, SEEK_SET);
   for (int i = 0; (c = fgetc(f)) != EOF && i < file_len + 12; i++) {
     if (c == '\'') {
-      print_inside_delimiters(f, '\'', '\'');
+      print_inside_single_quote(f);
     } else if (c == '"') {
-      print_inside_delimiters(f, '"', '"');
+      print_inside_double_quote(f);
     } else if (c == '(') {
       format_parenthesis(f);
     } else if (c == '}') {
