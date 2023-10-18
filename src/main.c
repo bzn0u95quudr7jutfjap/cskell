@@ -32,9 +32,25 @@ void print_until_char(FILE *stream, char end) {
 }
 
 void print_inside_delimiters(FILE *stream, char start, char end) {
-  int count = 0;
-  for (char c = fgetc(stream); (c != end && count == 0) && c != EOF; c = fgetc(stream)) {
+  int count = 1;
+  fseek(stream, -1, SEEK_CUR);
+  char c = fgetc(stream);
+
+  if (c != start) {
+    fprintf(stderr, "CARATTERE DI INIZIO NON È IL DELIMITATORE ('%c' != '%c')\n", c, start);
+    return;
   }
+
+  for (; (c != end && count != 0) && c != EOF; c = fgetc(stream)) {
+    printf("%c", c);
+    if (c == start) {
+      count += 1;
+    }
+    if (count == end) {
+      count -= 1;
+    }
+  }
+  printf("%c", c);
 }
 
 bool is_char_any_of(char c, size_t len, char possibles[]) {
@@ -65,14 +81,11 @@ int main(int argc, const char *argv[]) {
   fseek(f, 0, SEEK_SET);
   for (int i = 0; (c = fgetc(f)) != EOF && i < file_len + 12; i++) {
     if (c == '\'') {
-      printf("%c", c);
-      print_until_char(f, '\'');
+      print_inside_delimiters(f, '\'', '\'');
     } else if (c == '"') {
-      printf("%c", c);
-      print_until_char(f, '"');
+      print_inside_delimiters(f, '"', '"');
     } else if (c == '(') {
-      printf("%c", c);
-      print_until_char(f, ')');
+      print_inside_delimiters(f, '(', ')');
     } else if (is_char_any_of(c, 3, "{};")) {
       printf("\n");
       if (c == '{') {
