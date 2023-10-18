@@ -18,19 +18,6 @@ char consume_while_white(FILE *stream) {
   return c;
 }
 
-void print_until_char(FILE *stream, char end) {
-  // ERRORE DURANTE IL PARSING
-  char c;
-  while ((c = fgetc(stream)) != end && c != EOF) {
-    printf("%c", c);
-    // if(c == '\\'){
-    //   c = fgetc(stream);
-    //   printf("%c", c);
-    // }
-  };
-  printf("%c", end);
-}
-
 void print_inside_delimiters(FILE *stream, char start, char end) {
   int count = 1;
   fseek(stream, -1, SEEK_CUR);
