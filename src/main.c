@@ -18,7 +18,7 @@ char consume_while_white(FILE *stream) {
   return c;
 }
 
-void consume_until_char(FILE *stream, char end) {
+void print_until_char(FILE *stream, char end) {
   char c;
   while ((c = fgetc(stream)) != end) {
     printf("%c", c);
@@ -54,13 +54,13 @@ int main(int argc, const char *argv[]) {
   while ((c = fgetc(f)) != EOF) {
     if (c == '\'') {
       printf("%c", c);
-      consume_until_char(f, '\'');
+      print_until_char(f, '\'');
     } else if (c == '"') {
       printf("%c", c);
-      consume_until_char(f, '"');
+      print_until_char(f, '"');
     } else if (c == '(') {
       printf("%c", c);
-      consume_until_char(f, ')');
+      print_until_char(f, ')');
     } else if (is_char_any_of(c, 3, "{};")) {
       printf("\n");
       if (c == '{') {
