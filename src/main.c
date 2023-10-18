@@ -19,9 +19,14 @@ char consume_while_white(FILE *stream) {
 }
 
 void print_until_char(FILE *stream, char end) {
-  for (int i = 0, c = fgetc(stream); i < 1024 && (c) != end && c != EOF; c = fgetc(stream), i++) {
-    fprintf(stderr, "%d - %c\n", c, c);
+  // ERRORE DURANTE IL PARSING
+  char c;
+  while((c = fgetc(stream)) != end && c != EOF) {
     printf("%c", c);
+    // if(c == '\\'){
+    //   c = fgetc(stream);
+    //   printf("%c", c);
+    // }
   };
   printf("%c", end);
 }
