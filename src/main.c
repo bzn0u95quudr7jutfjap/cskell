@@ -19,8 +19,8 @@ char consume_while_white(FILE *stream) {
 }
 
 void print_until_char(FILE *stream, char end) {
-  char c;
-  while ((c = fgetc(stream)) != end) {
+  for (int i = 0, c = fgetc(stream); i < 1024 && (c) != end && c != EOF; c = fgetc(stream), i++) {
+    fprintf(stderr, "%d - %c\n", c, c);
     printf("%c", c);
   };
   printf("%c", end);
@@ -48,10 +48,12 @@ int main(int argc, const char *argv[]) {
     return 2;
   }
 
-  char c = 0;
-  int skip_endline = 0;
+  int c = 0;
   int indentation_level = 0;
-  while ((c = fgetc(f)) != EOF) {
+  fseek(f, 0, SEEK_END);
+  size_t file_len = ftell(f);
+  fseek(f, 0, SEEK_SET);
+  for (int i = 0; (c = fgetc(f)) != EOF && i < file_len + 12; i++) {
     if (c == '\'') {
       printf("%c", c);
       print_until_char(f, '\'');
@@ -68,11 +70,12 @@ int main(int argc, const char *argv[]) {
       }
       if (c == '}') {
         indentation_level -= 1;
+        printf("\n");
       }
       char c1 = consume_while_white(f);
       print_indentation(indentation_level);
       printf("%c  ", c);
-      c = c1;
+      fseek(f, -1, SEEK_CUR);
     } else {
       printf("%c", c);
     }
