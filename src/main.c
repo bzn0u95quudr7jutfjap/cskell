@@ -21,7 +21,7 @@ char consume_while_white(FILE *stream) {
 void print_until_char(FILE *stream, char end) {
   // ERRORE DURANTE IL PARSING
   char c;
-  while((c = fgetc(stream)) != end && c != EOF) {
+  while ((c = fgetc(stream)) != end && c != EOF) {
     printf("%c", c);
     // if(c == '\\'){
     //   c = fgetc(stream);
@@ -29,6 +29,12 @@ void print_until_char(FILE *stream, char end) {
     // }
   };
   printf("%c", end);
+}
+
+void print_inside_delimiters(FILE *stream, char start, char end) {
+  int count = 0;
+  for (char c = fgetc(stream); (c != end && count == 0) && c != EOF; c = fgetc(stream)) {
+  }
 }
 
 bool is_char_any_of(char c, size_t len, char possibles[]) {
@@ -42,8 +48,7 @@ bool is_char_any_of(char c, size_t len, char possibles[]) {
 
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
-    fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE>\n\n",
-            argv[0]);
+    fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE>\n\n", argv[0]);
     return 1;
   }
 
