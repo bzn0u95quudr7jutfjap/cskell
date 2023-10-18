@@ -24,6 +24,15 @@ void consume_until_char(FILE *stream, char end) {
   };
 }
 
+bool is_char_any_of(char c, size_t len, char possibles[]) {
+  for (int i = 0; i < len; i++) {
+    if (c == possibles[i]) {
+      return true;
+    }
+  }
+  return false;
+}
+
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
     fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE>\n\n",
@@ -42,27 +51,19 @@ int main(int argc, const char *argv[]) {
   int indentation_level = 0;
   while ((c = fgetc(f)) != EOF) {
     if (c == '\'') {
-      consume_until_char(f,'\'');
+      consume_until_char(f, '\'');
     } else if (c == '"') {
-      consume_until_char(f,'"');
-    } else if (c == '{') {
-      indentation_level += 1;
+      consume_until_char(f, '"');
+    } else if (is_char_any_of(c, 3, "{};")) {
       printf("\n");
+      if (c == '{') {
+        indentation_level += 1;
+      }
+      if (c == '}') {
+        indentation_level -= 1;
+      }
       char c1 = consume_while_white(f);
-      printf("%c", c);
-      print_indentation(indentation_level);
-      printf("%c", c1);
-    } else if (c == '}') {
-      indentation_level -= 1;
-      printf("\n");
-      char c1 = consume_while_white(f);
-      printf("%c", c);
-      print_indentation(indentation_level);
-      printf("%c", c1);
-    } else if (c == ';') {
-      printf("\n");
-      char c1 = consume_while_white(f);
-      printf("%c", c);
+      printf("%c  ", c);
       print_indentation(indentation_level);
       printf("%c", c1);
     } else {
