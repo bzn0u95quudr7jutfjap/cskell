@@ -1,36 +1,28 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define MAKE_STACK(NAME, T, push, pop, peek)                                   \
-  typedef struct NAME NAME;                                                    \
-  struct NAME {                                                                \
-    T *data;                                                                   \
-    size_t capacity;                                                           \
-    size_t size;                                                               \
-  };                                                                           \
-  void push(NAME *s, T o) {                                                    \
-    if (s->size == s->capacity) {                                              \
-      T *newdata = realloc(s->data, sizeof(T) * (s->capacity * 1.5 + 1));      \
-      if (newdata) {                                                           \
-        s->data = newdata;                                                     \
-        s->capacity = s->capacity * 1.5 + 1;                                   \
-      }                                                                        \
-    }                                                                          \
-    s->data[s->size++] = o;                                                    \
-  }                                                                            \
-  void pop(NAME *s) {                                                          \
-    if (s->size-- <= (s->capacity / 3)) {                                      \
-      T *newdata = realloc(s->data, sizeof(T) * (s->capacity / 2));            \
-      if (newdata) {                                                           \
-        s->data = newdata;                                                     \
-        s->capacity = s->capacity / 2;                                         \
-      }                                                                        \
-    }                                                                          \
-  }                                                                            \
-  T *peek(NAME *s) { return &(s->data[s->size - 1]); }                         \
-                                                                               \
-  const NAME New##NAME = {.data = NULL, .capacity = 0, .size = 0}
+void print_indentation(int level) {
+  for (int i = 0; i < level; i++) {
+    printf(" ");
+  }
+}
+
+bool is_white(char c) { return c == '\t' || c == ' ' || c == '\n'; }
+
+char consume_while_white(FILE *stream) {
+  char c;
+  while (is_white(c = fgetc(stream))) {
+  };
+  return c;
+}
+
+void consume_until_char(FILE *stream, char end) {
+  char c;
+  while ((c = fgetc(stream)) == end) {
+  };
+}
 
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
@@ -45,41 +37,34 @@ int main(int argc, const char *argv[]) {
     return 2;
   }
 
-  Stack words = NewStack;
-
   char c = 0;
   int skip_endline = 0;
   int indentation_level = 0;
   while ((c = fgetc(f)) != EOF) {
-    if (c == '{') {
-      printf("\n");
-      char c1 = fgetc(f);
-      if (c1 == '\n') {
-        for (int i = 0; i < indentation_level; i++) {
-          printf(" ");
-        }
-      }
-      printf("%c  ", c);
+    if (c == '\'') {
+      consume_until_char(f,'\'');
+    } else if (c == '"') {
+      consume_until_char(f,'"');
+    } else if (c == '{') {
       indentation_level += 1;
-    } else if (c == '}') {
       printf("\n");
-      char c1 = fgetc(f);
-      if (c1 == '\n') {
-        for (int i = 0; i < indentation_level; i++) {
-          printf(" ");
-        }
-      }
-      printf("%c  ", c);
+      char c1 = consume_while_white(f);
+      printf("%c", c);
+      print_indentation(indentation_level);
+      printf("%c", c1);
+    } else if (c == '}') {
       indentation_level -= 1;
+      printf("\n");
+      char c1 = consume_while_white(f);
+      printf("%c", c);
+      print_indentation(indentation_level);
+      printf("%c", c1);
     } else if (c == ';') {
       printf("\n");
-      char c1 = fgetc(f);
-      if (c1 == '\n') {
-        for (int i = 0; i < indentation_level; i++) {
-          printf(" ");
-        }
-      }
-      printf("%c  ", c);
+      char c1 = consume_while_white(f);
+      printf("%c", c);
+      print_indentation(indentation_level);
+      printf("%c", c1);
     } else {
       printf("%c", c);
     }
