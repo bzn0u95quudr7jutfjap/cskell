@@ -11,11 +11,11 @@ void print_indentation(int level) {
 
 bool is_white(char c) { return c == '\t' || c == ' ' || c == '\n'; }
 
-char consume_while_white(FILE *stream) {
+void consume_while_white(FILE *stream) {
   char c;
   while (is_white(c = fgetc(stream))) {
-  };
-  return c;
+  }
+  fseek(stream, -1, SEEK_CUR);
 }
 
 void print_inside_delimiters(FILE *stream, char start, char end) {
@@ -73,19 +73,31 @@ int main(int argc, const char *argv[]) {
       print_inside_delimiters(f, '"', '"');
     } else if (c == '(') {
       print_inside_delimiters(f, '(', ')');
-    } else if (is_char_any_of(c, 3, "{};")) {
+    } else if (c == '}') {
+      do {
+        consume_while_white(f);
+        printf("\n");
+        print_indentation(indentation_level);
+        printf("%c", c);
+        indentation_level--;
+      } while ((c = fgetc(f)) == '}');
       printf("\n");
-      if (c == '{') {
-        indentation_level += 1;
-      }
-      if (c == '}') {
-        indentation_level -= 1;
+      print_indentation(indentation_level);
+      if (indentation_level == 0) {
         printf("\n");
       }
-      char c1 = consume_while_white(f);
-      print_indentation(indentation_level);
-      printf("%c  ", c);
       fseek(f, -1, SEEK_CUR);
+    } else if (c == ';') {
+      consume_while_white(f);
+      printf("\n");
+      print_indentation(indentation_level);
+      printf("%c ", c);
+    } else if (c == '{') {
+      indentation_level++;
+      printf("\n");
+      print_indentation(indentation_level);
+      printf("%c ", c);
+      consume_while_white(f);
     } else {
       printf("%c", c);
     }
