@@ -22,7 +22,6 @@ void print_inside_delimiters(FILE *stream, char start, char end) {
   int count = 1;
   fseek(stream, -1, SEEK_CUR);
   char c = fgetc(stream);
-
   if (c != start) {
     fprintf(stderr, "CARATTERE DI INIZIO NON È IL DELIMITATORE ('%c' != '%c')\n", c, start);
     return;
@@ -38,6 +37,73 @@ void print_inside_delimiters(FILE *stream, char start, char end) {
     }
   }
   printf("%c", c);
+}
+
+void print_inside_double_quote(FILE * stream){
+  fseek(stream, -1, SEEK_CUR);
+  char c = fgetc(stream);
+  if (c != '"') {
+    fprintf(stderr, "IL CARATTERE DI INIZIO '%c' NON È '\"'\n", c);
+    return;
+  }
+
+  printf("\"");
+  while ((c = fgetc(stream)) != '"') {
+    if(c == '\\'){
+      printf("\\%c",fgetc(stream));
+    }else{
+      printf("%c",c);
+    }
+  }
+  printf("\"");
+
+}
+
+void print_inside_single_quote(FILE * stream){
+  fseek(stream, -1, SEEK_CUR);
+  char c = fgetc(stream);
+  if (c != '\'') {
+    fprintf(stderr, "IL CARATTERE DI INIZIO '%c' NON È '''\n", c);
+    return;
+  }
+
+  printf("'");
+  while ((c = fgetc(stream)) != '\'') {
+    if(c == '\\'){
+      printf("\\%c",fgetc(stream));
+    }else{
+      printf("%c",c);
+    }
+  }
+  printf("'");
+}
+
+void format_parenthesis(FILE *stream) {
+  fseek(stream, -1, SEEK_CUR);
+  char c = fgetc(stream);
+  if (c != '(') {
+    fprintf(stderr, "IL CARATTERE DI INIZIO '%c' NON È '('\n", c);
+    return;
+  }
+
+  printf("(");
+  while ((c = fgetc(stream)) != ')') {
+    if (c == '(') {
+      format_parenthesis(stream);
+    } else if (c == '"') {
+      print_inside_double_quote(stream);
+    } else if (c == '\'') {
+      print_inside_single_quote(stream);
+    } else if (c == ',') {
+      printf(", ");
+    } else if (is_white(c)) {
+      consume_while_white(stream);
+      printf(" ");
+    } else {
+      printf("%c", c);
+    }
+  }
+  printf(")");
 }
 
 bool is_char_any_of(char c, size_t len, char possibles[]) {
@@ -61,7 +127,7 @@ int main(int argc, const char *argv[]) {
     return 2;
   }
 
-  int c = 0;
+  char c = 0;
   int indentation_level = 0;
   fseek(f, 0, SEEK_END);
   size_t file_len = ftell(f);
@@ -72,7 +138,7 @@ int main(int argc, const char *argv[]) {
     } else if (c == '"') {
       print_inside_delimiters(f, '"', '"');
     } else if (c == '(') {
-      print_inside_delimiters(f, '(', ')');
+      format_parenthesis(f);
     } else if (c == '}') {
       do {
         consume_while_white(f);
