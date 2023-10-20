@@ -31,7 +31,7 @@ void print_inside_quote(FILE * stream, char delimiter){
   }
 
   fprintf(stdout,"%c",delimiter);
-  while ((c = fgetc(stream)) != '"') {
+  while ((c = fgetc(stream)) != delimiter) {
     if(c == '\\'){
       fprintf(stdout,"\\%c",fgetc(stream));
     }else{
@@ -50,7 +50,7 @@ void print_inside_single_quote(FILE * stream, char delimiter){
   }
 
   fprintf(stdout,"%c",delimiter);
-  while ((c = fgetc(stream)) != '\'') {
+  while ((c = fgetc(stream)) != delimiter) {
     if(c == '\\'){
       fprintf(stdout,"\\%c",fgetc(stream));
     }else{
