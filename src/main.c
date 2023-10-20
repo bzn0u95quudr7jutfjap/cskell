@@ -42,24 +42,6 @@ void print_inside_quote(FILE * stream, char delimiter){
 
 }
 
-void print_inside_single_quote(FILE * stream, char delimiter){
-  char c = fpeekbackc(stream);
-  if (c != delimiter) {
-    fprintf(stderr, "IL CARATTERE DI INIZIO '%c' NON È '%c'\n", c,delimiter);
-    return;
-  }
-
-  fprintf(stdout,"%c",delimiter);
-  while ((c = fgetc(stream)) != delimiter) {
-    if(c == '\\'){
-      fprintf(stdout,"\\%c",fgetc(stream));
-    }else{
-      fprintf(stdout,"%c",c);
-    }
-  }
-  fprintf(stdout,"%c",delimiter);
-}
-
 void format_parenthesis(FILE *stream) {
   fseek(stream, -1, SEEK_CUR);
   char c = fgetc(stream);
@@ -75,7 +57,7 @@ void format_parenthesis(FILE *stream) {
     } else if (c == '"') {
       print_inside_quote(stream,c);
     } else if (c == '\'') {
-      print_inside_single_quote(stream,c);
+      print_inside_quote(stream,c);
     } else if (c == ',') {
       fprintf(stdout,", ");
     } else if (is_white(c)) {
@@ -107,7 +89,7 @@ int main(int argc, const char *argv[]) {
   fseek(f, 0, SEEK_SET);
   for (int i = 0; (c = fgetc(f)) != EOF && i < file_len + 12; i++) {
     if (c == '\'') {
-      print_inside_single_quote(f,c);
+      print_inside_quote(f,c);
     } else if (c == '"') {
       print_inside_quote(f,c);
     } else if (c == '(') {
