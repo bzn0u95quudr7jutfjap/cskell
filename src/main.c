@@ -65,6 +65,8 @@ void format_parenthesis(FILE *stream) {
       format_parenthesis(stream);
     } else if (c == '"' || c == '\'') {
       print_inside_quote(stream, c);
+    } else if (is_white(c)) {
+      consume_while_white(stream);
     } else if (c == ',') {
       fprintf(stdout, ", ");
     } else if (is_white(c)) {
