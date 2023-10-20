@@ -18,27 +18,6 @@ void consume_while_white(FILE *stream) {
   fseek(stream, -1, SEEK_CUR);
 }
 
-void print_inside_delimiters(FILE *stream, char start, char end) {
-  int count = 1;
-  fseek(stream, -1, SEEK_CUR);
-  char c = fgetc(stream);
-  if (c != start) {
-    fprintf(stderr, "CARATTERE DI INIZIO NON È IL DELIMITATORE ('%c' != '%c')\n", c, start);
-    return;
-  }
-
-  for (; (c != end && count != 0) && c != EOF; c = fgetc(stream)) {
-    printf("%c", c);
-    if (c == start) {
-      count += 1;
-    }
-    if (count == end) {
-      count -= 1;
-    }
-  }
-  printf("%c", c);
-}
-
 void print_inside_double_quote(FILE * stream){
   fseek(stream, -1, SEEK_CUR);
   char c = fgetc(stream);
