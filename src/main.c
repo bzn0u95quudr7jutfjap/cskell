@@ -8,6 +8,12 @@ char fpeekbackc(FILE *stream) {
   return fgetc(stream);
 }
 
+char fpeekc(FILE *stream) {
+  char c = fgetc(stream);
+  fseek(stream, -1, SEEK_CUR);
+  return c;
+}
+
 size_t fsize(FILE *stream) {
   size_t pos = ftell(stream);
   fseek(stream, 0, SEEK_END);
