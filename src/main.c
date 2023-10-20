@@ -54,9 +54,7 @@ void format_parenthesis(FILE *stream) {
   while ((c = fgetc(stream)) != ')') {
     if (c == '(') {
       format_parenthesis(stream);
-    } else if (c == '"') {
-      print_inside_quote(stream,c);
-    } else if (c == '\'') {
+    } else if (c == '"' || c == '\'') {
       print_inside_quote(stream,c);
     } else if (c == ',') {
       fprintf(stdout,", ");
@@ -88,9 +86,7 @@ int main(int argc, const char *argv[]) {
   size_t file_len = ftell(f);
   fseek(f, 0, SEEK_SET);
   for (int i = 0; (c = fgetc(f)) != EOF && i < file_len + 12; i++) {
-    if (c == '\'') {
-      print_inside_quote(f,c);
-    } else if (c == '"') {
+    if (c == '"' || c == '\'') {
       print_inside_quote(f,c);
     } else if (c == '(') {
       format_parenthesis(f);
