@@ -39,7 +39,7 @@ bool is_any_of(char c, size_t size, char cs[]) {
 
 bool is_white(char c) { return is_any_of(c, 3, "\n \t"); }
 
-bool is_operatore(char c) { return is_any_of(c, 10, "+-*/<>&|=!"); };
+bool is_operatore(char c) { return is_any_of(c, 10, "+-*/<>&|=!"); }
 
 void consume_while_white(FILE *stream) {
   char c;
@@ -77,21 +77,49 @@ void format_parenthesis(FILE *stream) {
 
   fprintf(stdout, "(");
   size_t file_len = fsize(stream);
+  bool comma = false;
   for (size_t i = ftell(stream); (c = fgetc(stream)) != ')' && i < file_len; i++) {
     if (c == '(') {
       format_parenthesis(stream);
     } else if (c == '"' || c == '\'') {
       print_inside_quote(stream, c);
+    } else if (is_operatore(c)) {
+      char next = fpeekc(stream);
+      if (is_operatore(next)) {
+        if (c == next) {
+          if (c == '+' || c == '-') {
+            if (!comma && !is_white(fpeekbackc(stream))) {
+              fprintf(stdout, "%c%c ", c, fgetc(stream));
+            } else {
+              fprintf(stdout, " %c%c", c, fgetc(stream));
+            }
+          } else {
+            fprintf(stdout, " %c%c ", c, fgetc(stream));
+          }
+        } else {
+          fprintf(stdout, " %c%c ", c, fgetc(stream));
+        }
+      } else {
+        if (comma) {
+          fprintf(stdout, "%c ", c);
+        } else {
+          fprintf(stdout, " %c ", c);
+        }
+      }
     } else if (is_white(c)) {
       consume_while_white(stream);
+      continue; // skip comma = false;
     } else if (c == ',') {
       fprintf(stdout, ", ");
+      comma = true;
+      continue; // skip comma = false;
     } else if (is_white(c)) {
       consume_while_white(stream);
       fprintf(stdout, " ");
     } else {
       fprintf(stdout, "%c", c);
     }
+    comma = false;
   }
   fprintf(stdout, ")");
 }
