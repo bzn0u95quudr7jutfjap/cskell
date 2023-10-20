@@ -49,6 +49,31 @@ void consume_while_white(FILE *stream) {
   fseek(stream, -1, SEEK_CUR);
 }
 
+void print_operatore(char c, FILE *stream, bool comma) {
+  char next = fpeekc(stream);
+  if (is_operatore(next)) {
+    if (c == next) {
+      if (c == '+' || c == '-') {
+        if (!comma && !is_white(fpeekbackc(stream))) {
+          fprintf(stdout, "%c%c ", c, fgetc(stream));
+        } else {
+          fprintf(stdout, " %c%c", c, fgetc(stream));
+        }
+      } else {
+        fprintf(stdout, " %c%c ", c, fgetc(stream));
+      }
+    } else {
+      fprintf(stdout, " %c%c ", c, fgetc(stream));
+    }
+  } else {
+    if (comma) {
+      fprintf(stdout, "%c ", c);
+    } else {
+      fprintf(stdout, " %c ", c);
+    }
+  }
+}
+
 void print_inside_quote(FILE *stream, char delimiter) {
   char c = fpeekbackc(stream);
   if (c != delimiter) {
@@ -84,28 +109,7 @@ void format_parenthesis(FILE *stream) {
     } else if (c == '"' || c == '\'') {
       print_inside_quote(stream, c);
     } else if (is_operatore(c)) {
-      char next = fpeekc(stream);
-      if (is_operatore(next)) {
-        if (c == next) {
-          if (c == '+' || c == '-') {
-            if (!comma && !is_white(fpeekbackc(stream))) {
-              fprintf(stdout, "%c%c ", c, fgetc(stream));
-            } else {
-              fprintf(stdout, " %c%c", c, fgetc(stream));
-            }
-          } else {
-            fprintf(stdout, " %c%c ", c, fgetc(stream));
-          }
-        } else {
-          fprintf(stdout, " %c%c ", c, fgetc(stream));
-        }
-      } else {
-        if (comma) {
-          fprintf(stdout, "%c ", c);
-        } else {
-          fprintf(stdout, " %c ", c);
-        }
-      }
+      print_operatore(c, stream, comma);
     } else if (is_white(c)) {
       consume_while_white(stream);
       continue; // skip comma = false;
@@ -142,6 +146,17 @@ int main(int argc, const char *argv[]) {
   for (int i = 0; (c = fgetc(f)) != EOF && i < file_len + 12; i++) {
     if (c == '"' || c == '\'') {
       print_inside_quote(f, c);
+//    } else if (is_white(c)) {
+//      char next = fpeekc(f);
+//      if (is_operatore(next)) {
+//      }else if(is_white(next)){
+//        printf(" ");
+//        consume_while_white(f);
+//      }else{
+//        printf(" ");
+//      }
+    } else if (is_operatore(c)) {
+      print_operatore(c, f, false);
     } else if (c == '(') {
       format_parenthesis(f);
     } else if (c == '}') {
