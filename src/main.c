@@ -5,7 +5,7 @@
 
 void print_indentation(int level) {
   for (int i = 0; i < level; i++) {
-    printf("  ");
+    fprintf(stdout,"  ");
   }
 }
 
@@ -18,43 +18,43 @@ void consume_while_white(FILE *stream) {
   fseek(stream, -1, SEEK_CUR);
 }
 
-void print_inside_double_quote(FILE * stream){
+void print_inside_quote(FILE * stream, char delimiter){
   fseek(stream, -1, SEEK_CUR);
   char c = fgetc(stream);
-  if (c != '"') {
-    fprintf(stderr, "IL CARATTERE DI INIZIO '%c' NON È '\"'\n", c);
+  if (c != delimiter) {
+    fprintf(stderr, "IL CARATTERE DI INIZIO '%c' NON È '%c'\n", c, delimiter);
     return;
   }
 
-  printf("\"");
+  fprintf(stdout,"%c",delimiter);
   while ((c = fgetc(stream)) != '"') {
     if(c == '\\'){
-      printf("\\%c",fgetc(stream));
+      fprintf(stdout,"\\%c",fgetc(stream));
     }else{
-      printf("%c",c);
+      fprintf(stdout,"%c",c);
     }
   }
-  printf("\"");
+  fprintf(stdout,"%c",delimiter);
 
 }
 
-void print_inside_single_quote(FILE * stream){
+void print_inside_single_quote(FILE * stream, char delimiter){
   fseek(stream, -1, SEEK_CUR);
   char c = fgetc(stream);
-  if (c != '\'') {
-    fprintf(stderr, "IL CARATTERE DI INIZIO '%c' NON È '''\n", c);
+  if (c != delimiter) {
+    fprintf(stderr, "IL CARATTERE DI INIZIO '%c' NON È '%c'\n", c,delimiter);
     return;
   }
 
-  printf("'");
+  fprintf(stdout,"%c",delimiter);
   while ((c = fgetc(stream)) != '\'') {
     if(c == '\\'){
-      printf("\\%c",fgetc(stream));
+      fprintf(stdout,"\\%c",fgetc(stream));
     }else{
-      printf("%c",c);
+      fprintf(stdout,"%c",c);
     }
   }
-  printf("'");
+  fprintf(stdout,"%c",delimiter);
 }
 
 void format_parenthesis(FILE *stream) {
@@ -65,24 +65,24 @@ void format_parenthesis(FILE *stream) {
     return;
   }
 
-  printf("(");
+  fprintf(stdout,"(");
   while ((c = fgetc(stream)) != ')') {
     if (c == '(') {
       format_parenthesis(stream);
     } else if (c == '"') {
-      print_inside_double_quote(stream);
+      print_inside_quote(stream,c);
     } else if (c == '\'') {
-      print_inside_single_quote(stream);
+      print_inside_single_quote(stream,c);
     } else if (c == ',') {
-      printf(", ");
+      fprintf(stdout,", ");
     } else if (is_white(c)) {
       consume_while_white(stream);
-      printf(" ");
+      fprintf(stdout," ");
     } else {
-      printf("%c", c);
+      fprintf(stdout,"%c", c);
     }
   }
-  printf(")");
+  fprintf(stdout,")");
 }
 
 bool is_char_any_of(char c, size_t len, char possibles[]) {
@@ -113,38 +113,38 @@ int main(int argc, const char *argv[]) {
   fseek(f, 0, SEEK_SET);
   for (int i = 0; (c = fgetc(f)) != EOF && i < file_len + 12; i++) {
     if (c == '\'') {
-      print_inside_single_quote(f);
+      print_inside_single_quote(f,c);
     } else if (c == '"') {
-      print_inside_double_quote(f);
+      print_inside_quote(f,c);
     } else if (c == '(') {
       format_parenthesis(f);
     } else if (c == '}') {
       do {
         consume_while_white(f);
-        printf("\n");
+        fprintf(stdout,"\n");
         print_indentation(indentation_level);
-        printf("%c", c);
+        fprintf(stdout,"%c", c);
         indentation_level--;
       } while ((c = fgetc(f)) == '}');
-      printf("\n");
+      fprintf(stdout,"\n");
       print_indentation(indentation_level);
       if (indentation_level == 0) {
-        printf("\n");
+        fprintf(stdout,"\n");
       }
       fseek(f, -1, SEEK_CUR);
     } else if (c == ';') {
       consume_while_white(f);
-      printf("\n");
+      fprintf(stdout,"\n");
       print_indentation(indentation_level);
-      printf("%c ", c);
+      fprintf(stdout,"%c ", c);
     } else if (c == '{') {
       indentation_level++;
-      printf("\n");
+      fprintf(stdout,"\n");
       print_indentation(indentation_level);
-      printf("%c ", c);
+      fprintf(stdout,"%c ", c);
       consume_while_white(f);
     } else {
-      printf("%c", c);
+      fprintf(stdout,"%c", c);
     }
   }
 
