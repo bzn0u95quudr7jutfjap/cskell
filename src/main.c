@@ -85,15 +85,6 @@ void format_parenthesis(FILE *stream) {
   fprintf(stdout,")");
 }
 
-bool is_char_any_of(char c, size_t len, char possibles[]) {
-  for (int i = 0; i < len; i++) {
-    if (c == possibles[i]) {
-      return true;
-    }
-  }
-  return false;
-}
-
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
     fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE>\n\n", argv[0]);
