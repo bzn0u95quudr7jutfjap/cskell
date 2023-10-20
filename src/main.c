@@ -18,9 +18,13 @@ void consume_while_white(FILE *stream) {
   fseek(stream, -1, SEEK_CUR);
 }
 
-void print_inside_quote(FILE * stream, char delimiter){
+char fpeekbackc(FILE * stream){
   fseek(stream, -1, SEEK_CUR);
-  char c = fgetc(stream);
+  return fgetc(stream);
+}
+
+void print_inside_quote(FILE * stream, char delimiter){
+  char c = fpeekbackc(stream);
   if (c != delimiter) {
     fprintf(stderr, "IL CARATTERE DI INIZIO '%c' NON È '%c'\n", c, delimiter);
     return;
@@ -39,8 +43,7 @@ void print_inside_quote(FILE * stream, char delimiter){
 }
 
 void print_inside_single_quote(FILE * stream, char delimiter){
-  fseek(stream, -1, SEEK_CUR);
-  char c = fgetc(stream);
+  char c = fpeekbackc(stream);
   if (c != delimiter) {
     fprintf(stderr, "IL CARATTERE DI INIZIO '%c' NON È '%c'\n", c,delimiter);
     return;
