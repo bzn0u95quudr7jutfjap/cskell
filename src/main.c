@@ -43,8 +43,7 @@ void print_inside_quote(FILE * stream, char delimiter){
 }
 
 void format_parenthesis(FILE *stream) {
-  fseek(stream, -1, SEEK_CUR);
-  char c = fgetc(stream);
+  char c = fpeekbackc(stream);
   if (c != '(') {
     fprintf(stderr, "IL CARATTERE DI INIZIO '%c' NON È '('\n", c);
     return;
