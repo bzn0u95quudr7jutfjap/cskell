@@ -144,17 +144,46 @@ int main(int argc, const char *argv[]) {
   int indentation_level = 0;
   size_t file_len = fsize(f);
   for (int i = 0; (c = fgetc(f)) != EOF && i < file_len + 12; i++) {
+
+    if (c == '#') {
+      fprintf(stdout, "#");
+      while (!((c = fgetc(f)) != '\\' && fpeekc(f) == '\n')) {
+        fprintf(stdout, "%c", c);
+      }
+      consume_while_white(f);
+      fprintf(stdout, "%c\n", c);
+      print_indentation(indentation_level);
+      continue;
+    }
+
+    //if(c == '}'){
+    //  do {
+    //    consume_while_white(f);
+    //    fprintf(stdout, "\n");
+    //    print_indentation(indentation_level);
+    //    fprintf(stdout, "%c", c);
+    //    indentation_level--;
+    //  } while ((c = fgetc(f)) == '}');
+    //  fprintf(stdout, "\n");
+    //  print_indentation(indentation_level);
+    //  if (indentation_level == 0) {
+    //    fprintf(stdout, "\n");
+    //  }
+    //  fseek(f, -1, SEEK_CUR);
+    //  continue;
+    //}
+
     if (c == '"' || c == '\'') {
       print_inside_quote(f, c);
-//    } else if (is_white(c)) {
-//      char next = fpeekc(f);
-//      if (is_operatore(next)) {
-//      }else if(is_white(next)){
-//        printf(" ");
-//        consume_while_white(f);
-//      }else{
-//        printf(" ");
-//      }
+      //    } else if (is_white(c)) {
+      //      char next = fpeekc(f);
+      //      if (is_operatore(next)) {
+      //      }else if(is_white(next)){
+      //        printf(" ");
+      //        consume_while_white(f);
+      //      }else{
+      //        printf(" ");
+      //      }
     } else if (is_operatore(c)) {
       print_operatore(c, f, false);
     } else if (c == '(') {
