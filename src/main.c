@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+enum STATE { VIRGOLA, COMMENTO, MACRO, GRAFFA_A, GRAFFA_B };
+
 char fpeekbackc(FILE *stream) {
   fseek(stream, -1, SEEK_CUR);
   return fgetc(stream);
@@ -143,9 +145,14 @@ int main(int argc, const char *argv[]) {
   char c = 0;
   int indentation_level = 0;
   size_t file_len = fsize(f);
+  enum STATE state;
   for (int i = 0; (c = fgetc(f)) != EOF && i < file_len + 12; i++) {
 
     if (c == '#') {
+      if (state != MACRO) {
+        fprintf(stdout, "\n");
+      }
+      state = MACRO;
       fprintf(stdout, "#");
       while (!((c = fgetc(f)) != '\\' && fpeekc(f) == '\n')) {
         fprintf(stdout, "%c", c);
@@ -156,7 +163,7 @@ int main(int argc, const char *argv[]) {
       continue;
     }
 
-    if(c == '}'){
+    if (c == '}') {
       do {
         consume_while_white(f);
         fprintf(stdout, "\n");
@@ -170,6 +177,22 @@ int main(int argc, const char *argv[]) {
         fprintf(stdout, "\n");
       }
       fseek(f, -1, SEEK_CUR);
+      continue;
+    }
+
+    if (c == '/' && fpeekc(f) == '/') {
+      if (state != COMMENTO) {
+        fprintf(stdout, "\n");
+        print_indentation(indentation_level);
+      }
+      state = COMMENTO;
+      fprintf(stdout, "/");
+      while ((c = fgetc(f)) != '\n') {
+        fprintf(stdout, "%c", c);
+      }
+      consume_while_white(f);
+      fprintf(stdout, "\n");
+      print_indentation(indentation_level);
       continue;
     }
 
@@ -193,6 +216,7 @@ int main(int argc, const char *argv[]) {
       fprintf(stdout, "\n");
       print_indentation(indentation_level);
       fprintf(stdout, "%c ", c);
+      state = VIRGOLA;
     } else if (c == '{') {
       indentation_level++;
       fprintf(stdout, "\n");
