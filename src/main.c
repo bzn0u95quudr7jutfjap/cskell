@@ -156,22 +156,22 @@ int main(int argc, const char *argv[]) {
       continue;
     }
 
-    //if(c == '}'){
-    //  do {
-    //    consume_while_white(f);
-    //    fprintf(stdout, "\n");
-    //    print_indentation(indentation_level);
-    //    fprintf(stdout, "%c", c);
-    //    indentation_level--;
-    //  } while ((c = fgetc(f)) == '}');
-    //  fprintf(stdout, "\n");
-    //  print_indentation(indentation_level);
-    //  if (indentation_level == 0) {
-    //    fprintf(stdout, "\n");
-    //  }
-    //  fseek(f, -1, SEEK_CUR);
-    //  continue;
-    //}
+    if(c == '}'){
+      do {
+        consume_while_white(f);
+        fprintf(stdout, "\n");
+        print_indentation(indentation_level);
+        fprintf(stdout, "%c", c);
+        indentation_level--;
+      } while ((c = fgetc(f)) == '}');
+      fprintf(stdout, "\n");
+      print_indentation(indentation_level);
+      if (indentation_level == 0) {
+        fprintf(stdout, "\n");
+      }
+      fseek(f, -1, SEEK_CUR);
+      continue;
+    }
 
     if (c == '"' || c == '\'') {
       print_inside_quote(f, c);
@@ -188,20 +188,6 @@ int main(int argc, const char *argv[]) {
       print_operatore(c, f, false);
     } else if (c == '(') {
       format_parenthesis(f);
-    } else if (c == '}') {
-      do {
-        consume_while_white(f);
-        fprintf(stdout, "\n");
-        print_indentation(indentation_level);
-        fprintf(stdout, "%c", c);
-        indentation_level--;
-      } while ((c = fgetc(f)) == '}');
-      fprintf(stdout, "\n");
-      print_indentation(indentation_level);
-      if (indentation_level == 0) {
-        fprintf(stdout, "\n");
-      }
-      fseek(f, -1, SEEK_CUR);
     } else if (c == ';') {
       consume_while_white(f);
       fprintf(stdout, "\n");
