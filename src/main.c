@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -156,6 +157,16 @@ void parse_comment_multiline(char c, FILE *f, size_t indentation_level) {
   print_indentation(indentation_level);
 }
 
+void parse_macro(char c, FILE *f, size_t indentation_level) {
+  fprintf(stdout, "#");
+  while (!((c = fgetc(f)) == '\\' && fpeekc(f) == '\n') && c != '\n') {
+    fprintf(stdout, "%c", c);
+  }
+  consume_while_white(f);
+  fprintf(stdout, "\n");
+  print_indentation(indentation_level);
+}
+
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
     fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE>\n\n", argv[0]);
@@ -179,21 +190,13 @@ int main(int argc, const char *argv[]) {
       continue;
     }
 
-    // commento multilinea
     if (c == '/' && fpeekc(f) == '*') {
       parse_comment_multiline(c, f, indentation_level);
       continue;
     }
 
-    // macro
     if (c == '#') {
-      fprintf(stdout, "#");
-      while (!((c = fgetc(f)) == '\\' && fpeekc(f) == '\n') && c != '\n') {
-        fprintf(stdout, "%c", c);
-      }
-      consume_while_white(f);
-      fprintf(stdout, "\n");
-      print_indentation(indentation_level);
+      parse_macro(c, f, indentation_level);
       continue;
     }
 
