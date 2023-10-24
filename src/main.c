@@ -155,7 +155,6 @@ int main(int argc, const char *argv[]) {
       consume_while_white(f);
       fprintf(stdout, "\n");
       print_indentation(indentation_level);
-      commento_monolinea = false;
       continue;
     }
 
@@ -168,13 +167,11 @@ int main(int argc, const char *argv[]) {
       consume_while_white(f);
       fprintf(stdout, "\n");
       print_indentation(indentation_level);
-      commento_multilinea = false;
       continue;
     }
 
     //macro
     if (c == '#') {
-      fprintf(stderr, "\n\nENTRO IN MACRO\n\n");
       fprintf(stdout, "#");
       while (!((c = fgetc(f)) == '\\' && fpeekc(f) == '\n') && c != '\n') {
         fprintf(stdout, "%c",c);
@@ -182,8 +179,6 @@ int main(int argc, const char *argv[]) {
       consume_while_white(f);
       fprintf(stdout, "\n");
       print_indentation(indentation_level);
-      macro = false;
-      fprintf(stderr, "\n\nESCO IN MACRO\n\n");
       continue;
     }
 
@@ -227,18 +222,6 @@ int main(int argc, const char *argv[]) {
       print_indentation(indentation_level);
       fprintf(stdout, "%c ", c);
       consume_while_white(f);
-    } else if (c == '/') {
-      char next = fpeekc(f);
-      if (next == '/') {
-        commento_monolinea = true;
-      } else if (next == '*') {
-        commento_multilinea = true;
-      } else {
-        fprintf(stdout, "%c", c);
-      }
-    } else if (c == '#') {
-      macro = true;
-      continue;
     } else if (c == '\n') {
       if (macro) {
         if (fpeekbackc(f) != '\\') {
