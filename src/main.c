@@ -145,7 +145,9 @@ int main(int argc, const char *argv[]) {
   size_t file_len = fsize(f);
   bool macro = false, commento_monolinea = false, commento_multilinea = false;
   for (int i = 0; (c = fgetc(f)) != EOF && i < file_len + 12; i++) {
-    if (commento_monolinea) {
+
+    //commento monolinea
+    if (c == '/' && fpeekc(f) == '/') {
       fprintf(stdout, "%c", c);
       while ((c = fgetc(f)) != '\n') {
         fprintf(stdout, "%c", c);
@@ -157,7 +159,8 @@ int main(int argc, const char *argv[]) {
       continue;
     }
 
-    if (commento_multilinea) {
+    //commento multilinea
+    if (c == '/' && fpeekc(f) == '*') {
       fprintf(stdout, "%c", c);
       while (!((c = fgetc(f)) == '*' && fpeekc(f) == '/')) {
         fprintf(stdout, "%c", c);
@@ -169,10 +172,11 @@ int main(int argc, const char *argv[]) {
       continue;
     }
 
-    if (macro) {
+    //macro
+    if (c == '#') {
       fprintf(stderr, "\n\nENTRO IN MACRO\n\n");
       fprintf(stdout, "#");
-      while (((c = fgetc(f)) != '\n' && fpeekbackc(f) == '\\')) {
+      while (!((c = fgetc(f)) == '\\' && fpeekc(f) == '\n') && c != '\n') {
         fprintf(stdout, "%c",c);
       }
       consume_while_white(f);
