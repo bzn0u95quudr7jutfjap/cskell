@@ -130,6 +130,16 @@ void format_parenthesis(FILE *stream) {
 
 // RECURSION HELL
 
+void parse_comment_line(char c,FILE * f,size_t indentation_level){
+      fprintf(stdout, "%c", c);
+      while ((c = fgetc(f)) != '\n') {
+        fprintf(stdout, "%c", c);
+      }
+      consume_while_white(f);
+      fprintf(stdout, "\n");
+      print_indentation(indentation_level);
+}
+
 
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
@@ -149,15 +159,8 @@ int main(int argc, const char *argv[]) {
   bool macro = false, commento_monolinea = false, commento_multilinea = false;
   for (int i = 0; (c = fgetc(f)) != EOF && i < file_len + 12; i++) {
 
-    //commento monolinea
     if (c == '/' && fpeekc(f) == '/') {
-      fprintf(stdout, "%c", c);
-      while ((c = fgetc(f)) != '\n') {
-        fprintf(stdout, "%c", c);
-      }
-      consume_while_white(f);
-      fprintf(stdout, "\n");
-      print_indentation(indentation_level);
+      parse_comment_line(c, f, indentation_level);
       continue;
     }
 
