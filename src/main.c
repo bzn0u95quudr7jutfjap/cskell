@@ -1,3 +1,5 @@
+#include <bits/pthreadtypes.h>
+#include <bits/types/sigevent_t.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -131,6 +133,42 @@ void format_parenthesis(FILE *stream) {
 
 // RECURSION HELL
 
+bool is_macro(char, FILE*);
+bool is_comment_line(char, FILE*);
+bool is_comment_multiline(char, FILE*);
+void parse_comment_multiline(char, FILE*, size_t);
+void parse_comment_line(char, FILE*, size_t);
+void parse_macro(char, FILE*, size_t);
+
+typedef struct pattern_match pattern_match;
+struct pattern_match {
+  bool (*const condition)(char, FILE *);
+  void (*const consequence)(char, FILE *,size_t);
+};
+
+pattern_match next(char c, FILE * stream){
+  size_t len = 3;
+  pattern_match cases[] ={
+    {.condition = is_macro, .consequence = parse_macro},
+    {.condition = is_comment_line, .consequence = parse_comment_line},
+    {.condition = is_comment_multiline, .consequence = parse_comment_multiline},
+  };
+
+  size_t i = 0;
+  for(i = 0; i < len; i++){
+    if(cases[i].condition(c,stream)){
+      break;
+    }
+  }
+
+  fprintf(stderr, "NEXT: indice selezionato %zu su %zu\n", i, len);
+  
+  return cases[i];
+}
+
+bool is_comment_line(char c, FILE * stream){
+  return c == '/' && fpeekc(stream) == '/';
+}
 void parse_comment_line(char c, FILE *f, size_t indentation_level) {
   fprintf(stdout, "%c", c);
   while ((c = fgetc(f)) != '\n') {
@@ -141,6 +179,9 @@ void parse_comment_line(char c, FILE *f, size_t indentation_level) {
   print_indentation(indentation_level);
 }
 
+bool is_comment_multiline(char c, FILE * stream){
+  return c == '/' && fpeekc(stream) == '*';
+}
 void parse_comment_multiline(char c, FILE *f, size_t indentation_level) {
   fprintf(stdout, "\n");
   print_indentation(indentation_level);
@@ -155,8 +196,13 @@ void parse_comment_multiline(char c, FILE *f, size_t indentation_level) {
   print_indentation(indentation_level);
   fprintf(stdout, "*/\n");
   print_indentation(indentation_level);
+
+  next(c,f).consequence(c,f,indentation_level);
 }
 
+bool is_macro(char c, FILE * stream){
+  return c == '#';
+}
 void parse_macro(char c, FILE *f, size_t indentation_level) {
   fprintf(stdout, "#");
   while (!((c = fgetc(f)) == '\\' && fpeekc(f) == '\n') && c != '\n') {
@@ -165,7 +211,11 @@ void parse_macro(char c, FILE *f, size_t indentation_level) {
   consume_while_white(f);
   fprintf(stdout, "\n");
   print_indentation(indentation_level);
+
+  next(c,f).consequence(c,f,indentation_level);
 }
+
+void parse_brace_closed() {}
 
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
@@ -187,20 +237,11 @@ int main(int argc, const char *argv[]) {
 
     if (c == '/' && fpeekc(f) == '/') {
       parse_comment_line(c, f, indentation_level);
-      continue;
-    }
-
-    if (c == '/' && fpeekc(f) == '*') {
+    } else if (c == '/' && fpeekc(f) == '*') {
       parse_comment_multiline(c, f, indentation_level);
-      continue;
-    }
-
-    if (c == '#') {
+    } else if (c == '#') {
       parse_macro(c, f, indentation_level);
-      continue;
-    }
-
-    if (c == '"' || c == '\'') {
+    } else if (c == '"' || c == '\'') {
       print_inside_quote(f, c);
     } else if (is_operatore(c)) {
       print_operatore(c, f, false);
@@ -227,10 +268,10 @@ int main(int argc, const char *argv[]) {
       fprintf(stdout, "%c ", c);
     } else if (c == '{') {
       indentation_level++;
+      consume_while_white(f);
       fprintf(stdout, "\n");
       print_indentation(indentation_level);
       fprintf(stdout, "%c ", c);
-      consume_while_white(f);
     } else if (c == '\n') {
       if (macro) {
         if (fpeekbackc(f) != '\\') {
