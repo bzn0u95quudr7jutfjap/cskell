@@ -128,6 +128,9 @@ void format_parenthesis(FILE *stream) {
   fprintf(stdout, ")");
 }
 
+// RECURSION HELL
+
+
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
     fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE>\n\n", argv[0]);
