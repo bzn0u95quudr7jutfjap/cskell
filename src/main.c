@@ -130,16 +130,31 @@ void format_parenthesis(FILE *stream) {
 
 // RECURSION HELL
 
-void parse_comment_line(char c,FILE * f,size_t indentation_level){
-      fprintf(stdout, "%c", c);
-      while ((c = fgetc(f)) != '\n') {
-        fprintf(stdout, "%c", c);
-      }
-      consume_while_white(f);
-      fprintf(stdout, "\n");
-      print_indentation(indentation_level);
+void parse_comment_line(char c, FILE *f, size_t indentation_level) {
+  fprintf(stdout, "%c", c);
+  while ((c = fgetc(f)) != '\n') {
+    fprintf(stdout, "%c", c);
+  }
+  consume_while_white(f);
+  fprintf(stdout, "\n");
+  print_indentation(indentation_level);
 }
 
+void parse_comment_multiline(char c, FILE *f, size_t indentation_level) {
+  fprintf(stdout, "\n");
+  print_indentation(indentation_level);
+  fprintf(stdout, "%c%c ", c, fgetc(f));
+  consume_while_white(f);
+  while (!((c = fgetc(f)) == '*' && fpeekc(f) == '/')) {
+    fprintf(stdout, "%c", c);
+  }
+  fgetc(f);
+  consume_while_white(f);
+  fprintf(stdout, "\n");
+  print_indentation(indentation_level);
+  fprintf(stdout, "*/\n");
+  print_indentation(indentation_level);
+}
 
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
@@ -164,23 +179,17 @@ int main(int argc, const char *argv[]) {
       continue;
     }
 
-    //commento multilinea
+    // commento multilinea
     if (c == '/' && fpeekc(f) == '*') {
-      fprintf(stdout, "%c", c);
-      while (!((c = fgetc(f)) == '*' && fpeekc(f) == '/')) {
-        fprintf(stdout, "%c", c);
-      }
-      consume_while_white(f);
-      fprintf(stdout, "\n");
-      print_indentation(indentation_level);
+      parse_comment_multiline(c, f, indentation_level);
       continue;
     }
 
-    //macro
+    // macro
     if (c == '#') {
       fprintf(stdout, "#");
       while (!((c = fgetc(f)) == '\\' && fpeekc(f) == '\n') && c != '\n') {
-        fprintf(stdout, "%c",c);
+        fprintf(stdout, "%c", c);
       }
       consume_while_white(f);
       fprintf(stdout, "\n");
@@ -190,15 +199,15 @@ int main(int argc, const char *argv[]) {
 
     if (c == '"' || c == '\'') {
       print_inside_quote(f, c);
-      //    } else if (is_white(c)) {
-      //      char next = fpeekc(f);
-      //      if (is_operatore(next)) {
-      //      }else if(is_white(next)){
-      //        printf(" ");
-      //        consume_while_white(f);
-      //      }else{
-      //        printf(" ");
-      //      }
+      /* } else if (is_white(c)) {
+            char next = fpeekc(f);
+            if (is_operatore(next)) {
+            }else if(is_white(next)){
+              printf(" ");
+              consume_while_white(f);
+            }else{
+              printf(" ");
+            } */
     } else if (is_operatore(c)) {
       print_operatore(c, f, false);
     } else if (c == '(') {
