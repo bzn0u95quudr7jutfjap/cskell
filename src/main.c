@@ -202,15 +202,6 @@ int main(int argc, const char *argv[]) {
 
     if (c == '"' || c == '\'') {
       print_inside_quote(f, c);
-      /* } else if (is_white(c)) {
-            char next = fpeekc(f);
-            if (is_operatore(next)) {
-            }else if(is_white(next)){
-              printf(" ");
-              consume_while_white(f);
-            }else{
-              printf(" ");
-            } */
     } else if (is_operatore(c)) {
       print_operatore(c, f, false);
     } else if (c == '(') {
