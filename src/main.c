@@ -13,6 +13,21 @@ DEFINE_STACK(char, String);
 DECLARE_STACK(String, Stack_String);
 DEFINE_STACK(String, Stack_String);
 
+char * c_str(String * str){
+  str->push(str,'\0');
+  str->pop(str);
+  return str->data;
+}
+
+String read_comment_line(FILE * stream){
+  String line = NewString;
+  char c;
+  while((c = fgetc(stream)) != EOF && c != '\n'){
+    line.push(&line,c); 
+  }
+  return line;
+}
+
 char fpeekbackc(FILE *stream) {
   fseek(stream, -1, SEEK_CUR);
   return fgetc(stream);
