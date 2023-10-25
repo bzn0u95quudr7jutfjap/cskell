@@ -271,6 +271,13 @@ String from_c_str(char *c_str) {
   return str;
 }
 
+Stack_String parse_code_into_words(FILE * stream){
+  // TODO
+  Stack_String code = NewStack_String;
+
+  return code;
+}
+
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
     fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE>\n\n", argv[0]);
