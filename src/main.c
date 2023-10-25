@@ -13,19 +13,25 @@ DEFINE_STACK(char, String);
 DECLARE_STACK(String, Stack_String);
 DEFINE_STACK(String, Stack_String);
 
-char * c_str(String * str){
-  str->push(str,'\0');
+char *c_str(String *str) {
+  str->push(str, '\0');
   str->pop(str);
   return str->data;
 }
 
-String read_comment_line(FILE * stream){
+String read_comment_line(FILE *stream) {
   String line = NewString;
   char c;
-  while((c = fgetc(stream)) != EOF && c != '\n'){
-    line.push(&line,c); 
+  while ((c = fgetc(stream)) != EOF && c != '\n') {
+    line.push(&line, c);
   }
   return line;
+}
+
+void append(String *buffer, String *data) {
+  for (size_t i = 0; i < data->size; i++) {
+    buffer->push(buffer, data->data[i]);
+  }
 }
 
 char fpeekbackc(FILE *stream) {
@@ -257,6 +263,14 @@ pattern_match next(const char c, FILE *stream) {
   return cases[i];
 }
 
+String from_c_str(char *c_str) {
+  String str = NewString;
+  for (size_t i = 0; c_str[i]; i++) {
+    str.push(&str, c_str[i]);
+  }
+  return str;
+}
+
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
     fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE>\n\n", argv[0]);
@@ -268,6 +282,48 @@ int main(int argc, const char *argv[]) {
     fprintf(stderr, "File %s invalido\n\n", argv[1]);
     return 2;
   }
+
+  // Stack_String codeblocks = NewStack_String;
+  // codeblocks.push(&codeblocks, NewString);
+  // char c = 0;
+  // while ((c = fgetc(f)) != EOF) {
+  //   if (c == '\n') {
+  //     codeblocks.push(&codeblocks, NewString);
+  //   } else if (true) {
+  //     String *line = &(codeblocks.data[codeblocks.size - 1]);
+  //     line->push(line, c);
+  //   }
+  // }
+
+  // for (size_t i = 0; i < codeblocks.size; i++) {
+  //   String *line = &(codeblocks.data[i]);
+  //   printf("%6zu : %s\n", i, c_str(line));
+  // }
+
+  // String line = read_comment_line(f);
+  // Stack_String codice = NewStack_String;
+  // codice.push(&codice,NewString);
+  // String codice_in_linea;
+  // char c;
+  // while((c = fgetc(f)) != EOF){
+  //   String line = read_comment_line(f);
+  //   printf("%zu : %s\n",ftell(f),c_str(&line));
+  //   fprintf(stderr,"%zu\n",ftell(f));
+  //
+  //   // if(c == '#'){
+  //   //   String line = read_comment_line(f);
+  //   //   codice.push(&codice,line);
+  //   // }else if(true){
+  //   //   String * last = &(codice.data[codice.size -1]);
+  //   //   last->push(last,c);
+  //   // }else{
+  //   // }
+  // }
+
+  // for(size_t i = 0; i < codice.size; i++){
+  //   String * line = &(codice.data[codice.size -1]);
+  //   printf("%zu : %s\n",i+1,c_str(line));
+  // }
 
   char c = 0;
   int indentation_level = 0;
