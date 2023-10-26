@@ -67,6 +67,12 @@ bool is_speciale(char c){
   return is_any_of(c, num_speciali, speciali);
 }
 
+bool is_string_delimiter(char c){
+  static const char * const speciali = "'\"";
+  static const size_t num_speciali = strlen(speciali);
+  return is_any_of(c, num_speciali, speciali);
+}
+
 void print_inside_quote(FILE *stream, char delimiter) {
   char c = fpeekbackc(stream);
   if (c != delimiter) {
