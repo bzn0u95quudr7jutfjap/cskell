@@ -61,7 +61,7 @@ void print_indentation(int level) {
   }
 }
 
-bool is_any_of(char c, size_t size, char cs[]) {
+bool is_any_of(char c, size_t size, const char cs[]) {
   for (size_t i = 0; i < size; i++) {
     if (c == cs[i]) {
       return true;
