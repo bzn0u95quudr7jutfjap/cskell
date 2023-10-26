@@ -1,10 +1,12 @@
 #include <bits/pthreadtypes.h>
 #include <bits/types/sigevent_t.h>
+#include <bits/types/stack_t.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "stack.h"
 DECLARE_STACK(char, String);
@@ -271,11 +273,52 @@ String from_c_str(char *c_str) {
   return str;
 }
 
-Stack_String parse_code_into_words(FILE * stream){
-  // TODO
-  Stack_String code = NewStack_String;
+Stack_String parse_code_into_words(FILE *stream) {
+  size_t pos = ftell(stream);
+  fseek(stream, 0, SEEK_SET);
 
+  Stack_String code = NewStack_String;
+  code.push(&code, NewString);
+  char c;
+  while ((c = fgetc(stream)) != EOF) {
+    // commenti
+    if (c == '/' && fpeekc(stream) == '/') {
+      code.push(&code, NewString);
+      String *line = &(code.data[code.size - 1]);
+      line->push(line, '/');
+      while ((c = fgetc(stream)) != EOF && c != '\n') {
+        line->push(line, c);
+      }
+      code.push(&code, NewString);
+      continue;
+    }
+
+    if (is_white(c)) {
+      code.push(&code, NewString);
+    } else if (is_any_of(c, 9, "{}()[].;,")) {
+      code.push(&code, NewString);
+      String *line = &(code.data[code.size - 1]);
+      line->push(line, c);
+      code.push(&code, NewString);
+    } else if (true) {
+      String *line = &(code.data[code.size - 1]);
+      line->push(line, c);
+    }
+  }
+
+  fseek(stream, pos, SEEK_SET);
   return code;
+}
+
+Stack_String remove_empty_strings(Stack_String stack) {
+  Stack_String filtered = NewStack_String;
+  for (size_t i = 0; i < stack.size; i++) {
+    String line = stack.data[i];
+    if (line.size > 0) {
+      filtered.push(&filtered, line);
+    }
+  }
+  return filtered;
 }
 
 int main(int argc, const char *argv[]) {
@@ -289,6 +332,14 @@ int main(int argc, const char *argv[]) {
     fprintf(stderr, "File %s invalido\n\n", argv[1]);
     return 2;
   }
+
+  Stack_String codeblocks = remove_empty_strings(parse_code_into_words(f));
+  for (size_t i = 0; i < codeblocks.size; i++) {
+    String *line = &(codeblocks.data[i]);
+    printf("%zu : %s\n", i, c_str(line));
+  }
+
+  return 0;
 
   // Stack_String codeblocks = NewStack_String;
   // codeblocks.push(&codeblocks, NewString);
