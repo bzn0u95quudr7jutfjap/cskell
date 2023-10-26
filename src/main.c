@@ -277,6 +277,9 @@ Stack_String parse_code_into_words(FILE *stream) {
   size_t pos = ftell(stream);
   fseek(stream, 0, SEEK_SET);
 
+  static const char * const speciali = "<>{}()[]#.;,+-*/";
+  static const size_t num_speciali = strlen(speciali);
+
   Stack_String code = NewStack_String;
   code.push(&code, NewString);
   char c;
@@ -285,7 +288,7 @@ Stack_String parse_code_into_words(FILE *stream) {
     if (c == '/' && fpeekc(stream) == '/') {
       code.push(&code, NewString);
       String *line = &(code.data[code.size - 1]);
-      line->push(line, '/');
+      line->push(line, c);
       while ((c = fgetc(stream)) != EOF && c != '\n') {
         line->push(line, c);
       }
@@ -295,7 +298,7 @@ Stack_String parse_code_into_words(FILE *stream) {
 
     if (is_white(c)) {
       code.push(&code, NewString);
-    } else if (is_any_of(c, 9, "{}()[].;,")) {
+    } else if (is_any_of(c, num_speciali, speciali)) {
       code.push(&code, NewString);
       String *line = &(code.data[code.size - 1]);
       line->push(line, c);
