@@ -84,14 +84,6 @@ void print_inside_quote(FILE *stream, char delimiter) {
   fprintf(stdout, "%c", delimiter);
 }
 
-String from_c_str(char *c_str) {
-  String str = NewString;
-  for (size_t i = 0; c_str[i]; i++) {
-    push(&str, c_str[i]);
-  }
-  return str;
-}
-
 Stack_String parse_code_into_words(FILE *stream) {
   size_t pos = ftell(stream);
   fseek(stream, 0, SEEK_SET);
