@@ -65,25 +65,6 @@ bool is_string_delimiter(char c) {
   return is_any_of(c, strlen(charset), charset);
 }
 
-void print_inside_quote(FILE *stream, char delimiter) {
-  char c = fpeekbackc(stream);
-  if (c != delimiter) {
-    fprintf(stderr, "IL CARATTERE DI INIZIO '%c' NON È '%c'\n", c, delimiter);
-    return;
-  }
-
-  fprintf(stdout, "%c", delimiter);
-  size_t file_len = fsize(stream);
-  for (size_t i = ftell(stream); (c = fgetc(stream)) != delimiter && i < file_len; i++) {
-    if (c == '\\') {
-      fprintf(stdout, "\\%c", fgetc(stream));
-    } else {
-      fprintf(stdout, "%c", c);
-    }
-  }
-  fprintf(stdout, "%c", delimiter);
-}
-
 Stack_String parse_code_into_words(FILE *stream) {
   size_t pos = ftell(stream);
   fseek(stream, 0, SEEK_SET);
@@ -104,16 +85,41 @@ Stack_String parse_code_into_words(FILE *stream) {
       continue;
     }
 
+    if (is_string_delimiter(c)) {
+      char delimiter = c;
+      String str = NewString;
+      push(&str, delimiter);
+      while ((c = fgetc(stream)) != EOF && c != delimiter) {
+        if (c == '\\') {
+          push(&str, c);
+          push(&str, fgetc(stream));
+        } else {
+          push(&str, c);
+        }
+      }
+      push(&str, delimiter);
+      push(&code, str);
+      push(&code, NewString);
+      continue;
+    }
+
     if (is_white(c)) {
       push(&code, NewString);
-    } else if (is_speciale(c)) {
+      continue;
+    }
+
+    if (is_speciale(c)) {
       push(&code, NewString);
       String *line = &(code.data[code.size - 1]);
       push(line, c);
       push(&code, NewString);
-    } else if (true) {
+      continue;
+    }
+
+    if (true) {
       String *line = &(code.data[code.size - 1]);
       push(line, c);
+      continue;
     }
   }
 
@@ -147,7 +153,7 @@ int main(int argc, const char *argv[]) {
   Stack_String codeblocks = remove_empty_strings(parse_code_into_words(f));
   for (size_t i = 0; i < codeblocks.size; i++) {
     String *line = &(codeblocks.data[i]);
-    printf("%zu : %s\n", i, c_str(line));
+    printf("%7zu : %s\n", i, c_str(line));
   }
 
   fclose(f);
