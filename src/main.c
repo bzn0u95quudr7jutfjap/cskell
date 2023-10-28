@@ -16,6 +16,11 @@ char *c_str(String *str) {
   return str->data;
 }
 
+bool equals(String *a, String *b) { return strcmp(c_str(a), c_str(b)) == 0; }
+
+#define from_cstr(STR)                                                                                                                                         \
+  { .data = STR "\0", .size = strlen(STR "\0") + 1, .capacity = strlen(STR "\0") + 2 }
+
 char fpeekbackc(FILE *stream) {
   fseek(stream, -1, SEEK_CUR);
   return fgetc(stream);
