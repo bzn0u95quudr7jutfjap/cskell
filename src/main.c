@@ -86,8 +86,8 @@ Stack_String parse_code_into_words(FILE *stream) {
     }
 
     /* TODO TESTING
-      * del COMMENTO multilinea
-      */
+     * del COMMENTO multilinea
+     */
     // commenti multilinea
     if (c == '/' && fpeekc(stream) == '*') {
       push(&code, NewString);
