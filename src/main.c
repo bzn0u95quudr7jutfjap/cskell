@@ -1,12 +1,7 @@
-#include <bits/pthreadtypes.h>
-#include <bits/types/sigevent_t.h>
-#include <bits/types/stack_t.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "stack.h"
 DECLARE_STACK(char, String);
@@ -16,8 +11,8 @@ DECLARE_STACK(String, Stack_String);
 DEFINE_STACK(String, Stack_String);
 
 char *c_str(String *str) {
-  str->push(str, '\0');
-  str->pop(str);
+  push(str, '\0');
+  pop(str);
   return str->data;
 }
 
@@ -56,21 +51,18 @@ bool is_any_of(char c, size_t size, const char cs[]) {
 }
 
 bool is_white(char c) {
-  static const char * const bianchi = "\n \t";
-  static const size_t num = strlen(bianchi);
-  return is_any_of(c, num, bianchi);
+  static const char *const charset = "\n \t";
+  return is_any_of(c, strlen(charset), charset);
 }
 
-bool is_speciale(char c){
-  static const char * const speciali = "<>{}()[]#.;,+-*/";
-  static const size_t num_speciali = strlen(speciali);
-  return is_any_of(c, num_speciali, speciali);
+bool is_speciale(char c) {
+  static const char *const charset = "<>{}()[]#.;,+-*/";
+  return is_any_of(c, strlen(charset), charset);
 }
 
-bool is_string_delimiter(char c){
-  static const char * const speciali = "'\"";
-  static const size_t num_speciali = strlen(speciali);
-  return is_any_of(c, num_speciali, speciali);
+bool is_string_delimiter(char c) {
+  static const char *const charset = "'\"";
+  return is_any_of(c, strlen(charset), charset);
 }
 
 void print_inside_quote(FILE *stream, char delimiter) {
@@ -95,7 +87,7 @@ void print_inside_quote(FILE *stream, char delimiter) {
 String from_c_str(char *c_str) {
   String str = NewString;
   for (size_t i = 0; c_str[i]; i++) {
-    str.push(&str, c_str[i]);
+    push(&str, c_str[i]);
   }
   return str;
 }
@@ -104,33 +96,32 @@ Stack_String parse_code_into_words(FILE *stream) {
   size_t pos = ftell(stream);
   fseek(stream, 0, SEEK_SET);
 
-
   Stack_String code = NewStack_String;
-  code.push(&code, NewString);
+  push(&code, NewString);
   char c;
   while ((c = fgetc(stream)) != EOF) {
     // commenti
     if (c == '/' && fpeekc(stream) == '/') {
-      code.push(&code, NewString);
+      push(&code, NewString);
       String *line = &(code.data[code.size - 1]);
-      line->push(line, c);
+      push(line, c);
       while ((c = fgetc(stream)) != EOF && c != '\n') {
-        line->push(line, c);
+        push(line, c);
       }
-      code.push(&code, NewString);
+      push(&code, NewString);
       continue;
     }
 
     if (is_white(c)) {
-      code.push(&code, NewString);
+      push(&code, NewString);
     } else if (is_speciale(c)) {
-      code.push(&code, NewString);
+      push(&code, NewString);
       String *line = &(code.data[code.size - 1]);
-      line->push(line, c);
-      code.push(&code, NewString);
+      push(line, c);
+      push(&code, NewString);
     } else if (true) {
       String *line = &(code.data[code.size - 1]);
-      line->push(line, c);
+      push(line, c);
     }
   }
 
@@ -143,7 +134,7 @@ Stack_String remove_empty_strings(Stack_String stack) {
   for (size_t i = 0; i < stack.size; i++) {
     String line = stack.data[i];
     if (line.size > 0) {
-      filtered.push(&filtered, line);
+      push(&filtered, line);
     }
   }
   return filtered;
