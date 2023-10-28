@@ -47,3 +47,6 @@
     }                                                                                                                                                          \
     stack->size--;                                                                                                                                             \
   }
+
+#define push(STACK_P,DATA) ({typeof(STACK_P) stack = STACK_P ; stack->push(stack, DATA); })
+#define pop(STACK_P) ({typeof(STACK_P) stack = STACK_P ; stack->pop(stack); })
