@@ -85,6 +85,23 @@ Stack_String parse_code_into_words(FILE *stream) {
       continue;
     }
 
+    /* TODO TESTING
+      * del COMMENTO multilinea
+      */
+    // commenti multilinea
+    if (c == '/' && fpeekc(stream) == '*') {
+      push(&code, NewString);
+      String *line = &(code.data[code.size - 1]);
+      push(line, c);
+      while ((c = fgetc(stream)) != EOF && !(c == '*' && fpeekc(stream) == '/')) {
+        push(line, c);
+      }
+      push(line, c);
+      push(line, fgetc(stream));
+      push(&code, NewString);
+      continue;
+    }
+
     if (is_string_delimiter(c)) {
       char delimiter = c;
       String str = NewString;
