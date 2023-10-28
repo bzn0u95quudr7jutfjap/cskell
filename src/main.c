@@ -7,19 +7,32 @@
 DECLARE_STACK(char, String);
 DEFINE_STACK(char, String);
 
-DECLARE_STACK(String, Stack_String);
-DEFINE_STACK(String, Stack_String);
-
 char *c_str(String *str) {
+  if (str == NULL) {
+    return NULL;
+  }
   push(str, '\0');
   pop(str);
   return str->data;
 }
 
-bool equals(String *a, String *b) { return strcmp(c_str(a), c_str(b)) == 0; }
+bool equals(String *a, String *b) { return a != NULL && b != NULL && ((a == b) || ((a->size == b->size) && strcmp(c_str(a), c_str(b)) == 0)); }
 
 #define from_cstr(STR)                                                                                                                                         \
   { .data = STR "\0\0", .size = strlen(STR "\0") + 1, .capacity = strlen(STR "\0") + 2 }
+
+DECLARE_STACK(String, Stack_String);
+DEFINE_STACK(String, Stack_String);
+
+String *get(Stack_String *stack, size_t i) {
+  if (i < stack->size) {
+    return &(stack->data[i]);
+  }
+  if (i >= -(stack->size)) {
+    return &(stack->data[i + stack->size]);
+  }
+  return NULL;
+}
 
 char fpeekbackc(FILE *stream) {
   fseek(stream, -1, SEEK_CUR);
@@ -160,6 +173,54 @@ Stack_String remove_empty_strings(Stack_String stack) {
   return filtered;
 }
 
+void append(String *a, String *b) {
+  for (size_t i = 0; i < b->size; i++) {
+    push(a, b->data[i]);
+  }
+}
+void merge_include_macros(Stack_String *stack) {
+  fprintf(stderr, "INIZIO MACRO FOLDING\n");
+  String cancelletto = from_cstr("#");
+  String include = from_cstr("include");
+  String gt = from_cstr(">");
+  char *null_str = "null";
+
+  String *line = NULL;
+  String *next = NULL;
+  for (size_t i = 0; i < stack->size; i++) {
+    if ((line = get(stack, i)) == NULL) {
+      return;
+    }
+    fprintf(stderr, "LINE: %p -> %s\n",line, line ? c_str(line) : null_str);
+    if (!equals(line, &cancelletto)) {
+      continue;
+    }
+
+    if ((next = get(stack, ++i)) == NULL) {
+      return;
+    }
+    fprintf(stderr, "NEXT: %p -> %s\n",next, next ? c_str(next) : null_str);
+    if (!equals(next, &include)) {
+      continue;
+    }
+
+    for (size_t j = i; j < stack->size; j++) {
+      fprintf(stderr, "FOUND #include INIZIO INTERNAL LOOP\n");
+      if ((next = get(stack, j)) == NULL) {
+        return;
+      }
+      append(line, next);
+      next->size = 0;
+      if (equals(next, &gt)) {
+        push(line, '\n');
+        fprintf(stderr, "FOUND > EXITING INTERNAL LOOP\n");
+        break;
+      }
+    }
+  }
+  fprintf(stderr, "EXITING EXTERNAL LOOP\n");
+}
+
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
     fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE>\n\n", argv[0]);
@@ -173,6 +234,28 @@ int main(int argc, const char *argv[]) {
   }
 
   Stack_String codeblocks = remove_empty_strings(parse_code_into_words(f));
+  merge_include_macros(&codeblocks);
+  // {
+  //   size_t i;
+  //   i = 1;
+  //   append(get(&codeblocks, 0), get(&codeblocks, i));
+  //   get(&codeblocks, i)->size = 0;
+  //   i = 2;
+  //   append(get(&codeblocks, 0), get(&codeblocks, i));
+  //   get(&codeblocks, i)->size = 0;
+  //   i = 3;
+  //   append(get(&codeblocks, 0), get(&codeblocks, i));
+  //   get(&codeblocks, i)->size = 0;
+  //   i = 4;
+  //   append(get(&codeblocks, 0), get(&codeblocks, i));
+  //   get(&codeblocks, i)->size = 0;
+  //   i = 5;
+  //   append(get(&codeblocks, 0), get(&codeblocks, i));
+  //   get(&codeblocks, i)->size = 0;
+  //   i = 6;
+  //   append(get(&codeblocks, 0), get(&codeblocks, i));
+  //   get(&codeblocks, i)->size = 0;
+  // }
   for (size_t i = 0; i < codeblocks.size; i++) {
     String *line = &(codeblocks.data[i]);
     printf("%7zu : %s\n", i, c_str(line));
