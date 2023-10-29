@@ -202,7 +202,21 @@ void merge_include_macros(Stack_String *stack) {
     if (ca == NULL || in == NULL || le == NULL) {
       break;
     }
-    if (!(equals(ca, &cancelletto) && equals(in, &include) && equals(le, &lt))) {
+    if (!(equals(ca, &cancelletto) && equals(in, &include))) {
+      continue;
+    }
+
+    if (le->data[0] == '"') {
+      append(ca, in);
+      push(ca, ' ');
+      append(ca, le);
+      in->size = 0;
+      le->size = 0;
+      i += 3;
+      continue;
+    }
+
+    if (!equals(le, &lt)) {
       continue;
     }
 
@@ -215,7 +229,7 @@ void merge_include_macros(Stack_String *stack) {
     for (String *str = get(stack, i); str != NULL && !equals(str, &gt) && i < stack->size; i++) {
       append(ca, str);
       str->size = 0;
-      str = get(stack, i+1);
+      str = get(stack, i + 1);
     }
     if (get(stack, i) == NULL) {
       break;
