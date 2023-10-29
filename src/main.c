@@ -18,7 +18,7 @@ char *c_str(String *str) {
 
 bool equals(String *a, String *b) { return a != NULL && b != NULL && ((a == b) || ((a->size == b->size) && strcmp(c_str(a), c_str(b)) == 0)); }
 
-#define from_cstr(STR) ({.data = STR "\0\0", .size = strlen(STR "\0") + 1, .capacity = strlen(STR "\0") + 2})
+#define from_cstr(STR) ((String){.data = STR "\0\0", .size = strlen(STR "\0") + 1, .capacity = strlen(STR "\0") + 2})
 
 DECLARE_STACK(String, Stack_String);
 DEFINE_STACK(String, Stack_String);
