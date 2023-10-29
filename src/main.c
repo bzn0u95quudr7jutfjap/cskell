@@ -191,7 +191,7 @@ void merge_include_macros(Stack_String *stack) {
     if ((line = get(stack, i)) == NULL) {
       return;
     }
-    fprintf(stderr, "LINE: %p -> %s\n",line, line ? c_str(line) : null_str);
+    fprintf(stderr, "LINE: %p -> %s\n", line, line ? c_str(line) : null_str);
     if (!equals(line, &cancelletto)) {
       continue;
     }
@@ -199,7 +199,7 @@ void merge_include_macros(Stack_String *stack) {
     if ((next = get(stack, ++i)) == NULL) {
       return;
     }
-    fprintf(stderr, "NEXT: %p -> %s\n",next, next ? c_str(next) : null_str);
+    fprintf(stderr, "NEXT: %p -> %s\n", next, next ? c_str(next) : null_str);
     if (!equals(next, &include)) {
       continue;
     }
