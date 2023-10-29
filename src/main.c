@@ -239,6 +239,39 @@ void merge_include_macros(Stack_String *stack) {
   }
 }
 
+void merge_parenthesis(Stack_String *stack) {
+  String p_open = from_cstr("(");
+  String p_closed = from_cstr(")");
+  String coma = from_cstr(",");
+  String *p = NULL;
+  String *str = NULL;
+  for (size_t i = 0; i < stack->size; i++) {
+    p = get(stack, i);
+    if (p == NULL) {
+      return;
+    }
+    if (p->size == 0 || !equals(p, &p_open)) {
+      continue;
+    }
+
+    for (str = get(stack, ++i); str != NULL && !equals(str, &p_closed) && i < stack->size; i++) {
+      if (equals(str, &coma)) {
+        pop(p);
+      }
+      append(p, str);
+      push(p, ' ');
+      str->size = 0;
+      str = get(stack, i + 1);
+    }
+    if (get(stack, i) == NULL) {
+      break;
+    }
+    pop(p);
+    append(p, get(stack, i));
+    get(stack, i)->size = 0;
+  }
+}
+
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
     fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE>\n\n", argv[0]);
@@ -253,6 +286,7 @@ int main(int argc, const char *argv[]) {
 
   Stack_String codeblocks = remove_empty_strings(parse_code_into_words(f));
   merge_include_macros(&codeblocks);
+  merge_parenthesis(&codeblocks);
   for (size_t i = 0; i < codeblocks.size; i++) {
     printf("%7zu : %s\n", i, c_str(get(&codeblocks, i)));
   }
