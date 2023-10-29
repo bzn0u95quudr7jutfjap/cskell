@@ -17,16 +17,13 @@ char *c_str(String *str) {
 }
 
 bool equals(String *a, String *b) {
-  fprintf(stderr, "STRING{ .data = '%s', .size = %zu, .capacity = %zu };\n", c_str(a), a->size, a->capacity);
-  fprintf(stderr, "STRING{ .data = '%s', .size = %zu, .capacity = %zu };\n", c_str(b), b->size, b->capacity);
   return a != NULL && b != NULL && ((a == b) || ((a->size == b->size) && strcmp(c_str(a), c_str(b)) == 0));
 }
 
-// #define from_cstr(STR) ((String){.data = STR "\0\0", .size = strlen(STR "\0") + 1, .capacity = strlen(STR "\0") + 2})
 String from_cstr(char *str) {
   String tmp = NewString;
-  for(size_t i = 0; str[i]; i++){
-    push(&tmp,str[i]);
+  for (size_t i = 0; str[i]; i++) {
+    push(&tmp, str[i]);
   }
   return tmp;
 }
@@ -189,46 +186,43 @@ void append(String *a, String *b) {
   }
 }
 void merge_include_macros(Stack_String *stack) {
-  fprintf(stderr, "INIZIO MACRO FOLDING\n");
   String cancelletto = from_cstr("#");
   String include = from_cstr("include");
+  String lt = from_cstr("<");
   String gt = from_cstr(">");
   char *null_str = "null";
 
-  String *line = NULL;
-  String *next = NULL;
+  String *ca = NULL;
+  String *in = NULL;
+  String *le = NULL;
   for (size_t i = 0; i < stack->size; i++) {
-    if ((line = get(stack, i)) == NULL) {
-      return;
+    ca = get(stack, i);
+    in = get(stack, i + 1);
+    le = get(stack, i + 2);
+    if (ca == NULL || in == NULL || le == NULL) {
+      break;
     }
-    fprintf(stderr, "LINE: %p -> %s\n", line, line ? c_str(line) : null_str);
-    if (!equals(line, &cancelletto)) {
+    if (!(equals(ca, &cancelletto) && equals(in, &include) && equals(le, &lt))) {
       continue;
     }
 
-    if ((next = get(stack, ++i)) == NULL) {
-      return;
+    append(ca, in);
+    push(ca, ' ');
+    append(ca, le);
+    in->size = 0;
+    le->size = 0;
+    i += 3;
+    for (String *str = get(stack, i); str != NULL && !equals(str, &gt) && i < stack->size; i++) {
+      append(ca, str);
+      str->size = 0;
+      str = get(stack, i+1);
     }
-    fprintf(stderr, "NEXT: %p -> %s\n", next, next ? c_str(next) : null_str);
-    if (!equals(next, &include)) {
-      continue;
+    if (get(stack, i) == NULL) {
+      break;
     }
-
-    for (size_t j = i; j < stack->size; j++) {
-      fprintf(stderr, "FOUND #include INIZIO INTERNAL LOOP\n");
-      if ((next = get(stack, j)) == NULL) {
-        return;
-      }
-      append(line, next);
-      next->size = 0;
-      if (equals(next, &gt)) {
-        push(line, '\n');
-        fprintf(stderr, "FOUND > EXITING INTERNAL LOOP\n");
-        break;
-      }
-    }
+    append(ca, get(stack, i));
+    get(stack, i)->size = 0;
   }
-  fprintf(stderr, "EXITING EXTERNAL LOOP\n");
 }
 
 int main(int argc, const char *argv[]) {
@@ -246,8 +240,7 @@ int main(int argc, const char *argv[]) {
   Stack_String codeblocks = remove_empty_strings(parse_code_into_words(f));
   merge_include_macros(&codeblocks);
   for (size_t i = 0; i < codeblocks.size; i++) {
-    String *line = &(codeblocks.data[i]);
-    printf("%7zu : %s\n", i, c_str(line));
+    printf("%7zu : %s\n", i, c_str(get(&codeblocks, i)));
   }
 
   fclose(f);
