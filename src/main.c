@@ -17,10 +17,19 @@ char *c_str(String *str) {
 }
 
 bool equals(String *a, String *b) {
+  fprintf(stderr, "STRING{ .data = '%s', .size = %zu, .capacity = %zu };\n", c_str(a), a->size, a->capacity);
+  fprintf(stderr, "STRING{ .data = '%s', .size = %zu, .capacity = %zu };\n", c_str(b), b->size, b->capacity);
   return a != NULL && b != NULL && ((a == b) || ((a->size == b->size) && strcmp(c_str(a), c_str(b)) == 0));
 }
 
-#define from_cstr(STR) ((String){.data = STR "\0\0", .size = strlen(STR "\0") + 1, .capacity = strlen(STR "\0") + 2})
+// #define from_cstr(STR) ((String){.data = STR "\0\0", .size = strlen(STR "\0") + 1, .capacity = strlen(STR "\0") + 2})
+String from_cstr(char *str) {
+  String tmp = NewString;
+  for(size_t i = 0; str[i]; i++){
+    push(&tmp,str[i]);
+  }
+  return tmp;
+}
 
 DECLARE_STACK(String, Stack_String);
 DEFINE_STACK(String, Stack_String);
@@ -236,27 +245,6 @@ int main(int argc, const char *argv[]) {
 
   Stack_String codeblocks = remove_empty_strings(parse_code_into_words(f));
   merge_include_macros(&codeblocks);
-  // {
-  //   size_t i;
-  //   i = 1;
-  //   append(get(&codeblocks, 0), get(&codeblocks, i));
-  //   get(&codeblocks, i)->size = 0;
-  //   i = 2;
-  //   append(get(&codeblocks, 0), get(&codeblocks, i));
-  //   get(&codeblocks, i)->size = 0;
-  //   i = 3;
-  //   append(get(&codeblocks, 0), get(&codeblocks, i));
-  //   get(&codeblocks, i)->size = 0;
-  //   i = 4;
-  //   append(get(&codeblocks, 0), get(&codeblocks, i));
-  //   get(&codeblocks, i)->size = 0;
-  //   i = 5;
-  //   append(get(&codeblocks, 0), get(&codeblocks, i));
-  //   get(&codeblocks, i)->size = 0;
-  //   i = 6;
-  //   append(get(&codeblocks, 0), get(&codeblocks, i));
-  //   get(&codeblocks, i)->size = 0;
-  // }
   for (size_t i = 0; i < codeblocks.size; i++) {
     String *line = &(codeblocks.data[i]);
     printf("%7zu : %s\n", i, c_str(line));
