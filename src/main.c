@@ -32,8 +32,8 @@ void move_into(String * dst, String * src){
   for(size_t i = 0; i < src->size; i++){
     push(dst,src->data[i]);
   }
-  free(src->data);
-  src->data = NULL;
+  // free(src->data);
+  // src->data = NULL;
   src->size = 0;
 }
 
@@ -216,11 +216,9 @@ void merge_include_macros(Stack_String *stack) {
     }
 
     if (le->data[0] == '"') {
-      append(ca, in);
+      move_into(ca, in);
       push(ca, ' ');
-      append(ca, le);
-      in->size = 0;
-      le->size = 0;
+      move_into(ca, le);
       i += 3;
       continue;
     }
@@ -229,22 +227,18 @@ void merge_include_macros(Stack_String *stack) {
       continue;
     }
 
-    append(ca, in);
+    move_into(ca, in);
     push(ca, ' ');
-    append(ca, le);
-    in->size = 0;
-    le->size = 0;
+    move_into(ca, le);
     i += 3;
     for (String *str = get(stack, i); str != NULL && !equals(str, &gt) && i < stack->size; i++) {
-      append(ca, str);
-      str->size = 0;
+      move_into(ca, str);
       str = get(stack, i + 1);
     }
     if (get(stack, i) == NULL) {
       break;
     }
-    append(ca, get(stack, i));
-    get(stack, i)->size = 0;
+    move_into(ca, get(stack, i));
   }
 }
 
@@ -267,17 +261,15 @@ void merge_parenthesis(Stack_String *stack) {
       if (equals(str, &coma)) {
         pop(p);
       }
-      append(p, str);
+      move_into(p, str);
       push(p, ' ');
-      str->size = 0;
       str = get(stack, i + 1);
     }
     if (get(stack, i) == NULL) {
       break;
     }
     pop(p);
-    append(p, get(stack, i));
-    get(stack, i)->size = 0;
+    move_into(p, get(stack, i));
   }
 }
 
