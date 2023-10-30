@@ -189,11 +189,6 @@ Stack_String remove_empty_strings(Stack_String stack) {
   return filtered;
 }
 
-void append(String *a, String *b) {
-  for (size_t i = 0; i < b->size; i++) {
-    push(a, b->data[i]);
-  }
-}
 void merge_include_macros(Stack_String *stack) {
   String cancelletto = from_cstr("#");
   String include = from_cstr("include");
