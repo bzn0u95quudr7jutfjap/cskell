@@ -7,23 +7,10 @@
 #include "string_class.h"
 #include "stack_string.h"
 
-char fpeekbackc(FILE *stream) {
-  fseek(stream, -1, SEEK_CUR);
-  return fgetc(stream);
-}
-
 char fpeekc(FILE *stream) {
   char c = fgetc(stream);
   fseek(stream, -1, SEEK_CUR);
   return c;
-}
-
-size_t fsize(FILE *stream) {
-  size_t pos = ftell(stream);
-  fseek(stream, 0, SEEK_END);
-  size_t size = ftell(stream);
-  fseek(stream, pos, SEEK_SET);
-  return size;
 }
 
 void print_indentation(int level) {

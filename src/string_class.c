@@ -29,7 +29,8 @@ void move_into(String *dst, String *src) {
   for (size_t i = 0; i < src->size; i++) {
     push(dst, src->data[i]);
   }
-  // free(src->data);
-  // src->data = NULL;
+  free(src->data);
+  src->data = NULL;
   src->size = 0;
+  src->capacity = 0;
 }
