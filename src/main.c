@@ -28,6 +28,15 @@ String from_cstr(char *str) {
   return tmp;
 }
 
+void move_into(String * dst, String * src){
+  for(size_t i = 0; i < src->size; i++){
+    push(dst,src->data[i]);
+  }
+  free(src->data);
+  src->data = NULL;
+  src->size = 0;
+}
+
 DECLARE_STACK(String, Stack_String);
 DEFINE_STACK(String, Stack_String);
 
