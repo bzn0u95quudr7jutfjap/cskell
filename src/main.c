@@ -196,17 +196,13 @@ void merge_include_macros_rec(Stack_String *stack, size_t i) {
   String *resto = get(stack, i + 2);
 
   if (cancelletto == NULL || includi == NULL || resto == NULL) {
-    fprintf(stderr, "NULL FOUND\n");
     return this(stack, i + 1);
   }
 
   bool is_inclusione = strcmp(c_str(cancelletto), "#") == 0 && strcmp(c_str(includi), "include") == 0;
   if (!is_inclusione) {
-    fprintf(stderr, "NOT #include\n");
     return this(stack, i + 1);
   }
-
-  fprintf(stderr, "MAYBE #include \".*\"\n");
 
   if (resto->data[0] == '"') {
     move_into(cancelletto, includi);
@@ -215,20 +211,20 @@ void merge_include_macros_rec(Stack_String *stack, size_t i) {
     return this(stack, i + 3);
   }
 
-  fprintf(stderr, "MAYBE #include <.*>\n");
-
   if (resto->data[0] == '<') {
     move_into(cancelletto, includi);
     push(cancelletto, ' ');
-    size_t j;
-    for (j = 1; resto != NULL && resto->data[0] != '>'; j++) {
+    move_into(cancelletto, resto);
+    size_t j = 3;
+    resto = get(stack, i + j);
+    for (; resto != NULL && resto->size > 0 && resto->data[0] != '>'; j++, resto = get(stack, i + j)) {
       move_into(cancelletto, resto);
-      resto = get(stack, i + j);
     }
-    return this(stack, i + j);
+    if (resto != NULL && resto->size > 0 && resto->data[0] == '>') {
+      move_into(cancelletto, resto);
+    }
+    return this(stack, i + j + 1);
   }
-
-  fprintf(stderr, "GO NEXT\n");
 
   return this(stack, i + 1);
 }
