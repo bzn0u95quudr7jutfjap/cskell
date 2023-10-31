@@ -185,6 +185,54 @@ void merge_include_macros(Stack_String *stack) {
   }
 }
 
+void merge_include_macros_rec(Stack_String *stack, size_t i) {
+  static void (*this)(Stack_String *, size_t) = merge_include_macros_rec;
+  if (i >= stack->size) {
+    return;
+  }
+
+  String *cancelletto = get(stack, i);
+  String *includi = get(stack, i + 1);
+  String *resto = get(stack, i + 2);
+
+  if (cancelletto == NULL || includi == NULL || resto == NULL) {
+    fprintf(stderr, "NULL FOUND\n");
+    return this(stack, i + 1);
+  }
+
+  bool is_inclusione = strcmp(c_str(cancelletto), "#") == 0 && strcmp(c_str(includi), "include") == 0;
+  if (!is_inclusione) {
+    fprintf(stderr, "NOT #include\n");
+    return this(stack, i + 1);
+  }
+
+  fprintf(stderr, "MAYBE #include \".*\"\n");
+
+  if (resto->data[0] == '"') {
+    move_into(cancelletto, includi);
+    push(cancelletto, ' ');
+    move_into(cancelletto, resto);
+    return this(stack, i + 3);
+  }
+
+  fprintf(stderr, "MAYBE #include <.*>\n");
+
+  if (resto->data[0] == '<') {
+    move_into(cancelletto, includi);
+    push(cancelletto, ' ');
+    size_t j;
+    for (j = 1; resto != NULL && resto->data[0] != '>'; j++) {
+      move_into(cancelletto, resto);
+      resto = get(stack, i + j);
+    }
+    return this(stack, i + j);
+  }
+
+  fprintf(stderr, "GO NEXT\n");
+
+  return this(stack, i + 1);
+}
+
 void merge_parenthesis(Stack_String *stack) {
   String p_open = from_cstr("(");
   String p_closed = from_cstr(")");
@@ -271,7 +319,8 @@ int main(int argc, const char *argv[]) {
 
   Stack_String codeblocks = parse_code_into_words(f);
   remove_empty_strings(&codeblocks);
-  merge_include_macros(&codeblocks);
+  // merge_include_macros(&codeblocks);
+  merge_include_macros_rec(&codeblocks, 0);
   // merge_parenthesis(&codeblocks);
   merge_parenthesis_rec(&codeblocks, NULL, 0, 0);
   remove_empty_strings(&codeblocks);
