@@ -4,8 +4,8 @@
 #include <string.h>
 
 #include "stack.h"
-#include "string_class.h"
 #include "stack_string.h"
+#include "string_class.h"
 
 char fpeekc(FILE *stream) {
   char c = fgetc(stream);
@@ -122,7 +122,7 @@ Stack_String parse_code_into_words(FILE *stream) {
   return code;
 }
 
-Stack_String remove_empty_strings(Stack_String stack) {
+Stack_String remove_empty_strings_leaky(Stack_String stack) {
   Stack_String filtered = NewStack_String;
   for (size_t i = 0; i < stack.size; i++) {
     String line = stack.data[i];
@@ -212,6 +212,47 @@ void merge_parenthesis(Stack_String *stack) {
   }
 }
 
+void merge_parenthesis_rec(Stack_String *stack, String *str, size_t i, size_t level) {
+  static void (*const this)(Stack_String *, String *, size_t, size_t) = merge_parenthesis_rec;
+  if (i >= stack->size) {
+    return;
+  }
+
+  String *line = get(stack, i);
+  if (line == NULL) {
+    return;
+  }
+
+  if (strcmp(c_str(line), "(") == 0) {
+    if (str == NULL) {
+      return this(stack, line, i + 1, level + 1);
+    }
+    move_into(str, line);
+    return this(stack, str, i + 1, level + 1);
+  }
+
+  if (strcmp(c_str(line), ")") == 0) {
+    move_into(str, line);
+    if (level-1 == 0) {
+      return this(stack, NULL, i + 1, 0);
+    }
+    return this(stack, str, i + 1, level - 1);
+  }
+
+  if (strcmp(c_str(line), ",") == 0) {
+    move_into(str, line);
+    return this(stack, str, i + 1, level);
+  }
+
+  if (level == 0) {
+    return this(stack, str, i + 1, level);
+  }
+
+  push(str, ' ');
+  move_into(str, line);
+  return this(stack, str, i + 1, level);
+}
+
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
     fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE>\n\n", argv[0]);
@@ -224,9 +265,10 @@ int main(int argc, const char *argv[]) {
     return 2;
   }
 
-  Stack_String codeblocks = remove_empty_strings(parse_code_into_words(f));
+  Stack_String codeblocks = remove_empty_strings_leaky(parse_code_into_words(f));
   merge_include_macros(&codeblocks);
-  merge_parenthesis(&codeblocks);
+  // merge_parenthesis(&codeblocks);
+  merge_parenthesis_rec(&codeblocks, NULL, 0, 0);
   for (size_t i = 0; i < codeblocks.size; i++) {
     printf("%7zu : %s\n", i, c_str(get(&codeblocks, i)));
   }
