@@ -133,6 +133,21 @@ Stack_String remove_empty_strings_leaky(Stack_String stack) {
   return filtered;
 }
 
+void remove_empty_strings(Stack_String *stack) {
+  Stack_String filtered = NewStack_String;
+  for (size_t i = 0; i < stack->size; i++) {
+    String *line = get(stack, i);
+    if (line->size > 0) {
+      push(&filtered, NewString);
+      move_into(get(&filtered, -1), line);
+    }
+  }
+  free(stack->data);
+  stack->data = filtered.data;
+  stack->size = filtered.size;
+  stack->capacity = filtered.capacity;
+}
+
 void merge_include_macros(Stack_String *stack) {
   String cancelletto = from_cstr("#");
   String include = from_cstr("include");
@@ -233,7 +248,7 @@ void merge_parenthesis_rec(Stack_String *stack, String *str, size_t i, size_t le
 
   if (strcmp(c_str(line), ")") == 0) {
     move_into(str, line);
-    if (level-1 == 0) {
+    if (level - 1 == 0) {
       return this(stack, NULL, i + 1, 0);
     }
     return this(stack, str, i + 1, level - 1);
@@ -265,10 +280,12 @@ int main(int argc, const char *argv[]) {
     return 2;
   }
 
-  Stack_String codeblocks = remove_empty_strings_leaky(parse_code_into_words(f));
+  Stack_String codeblocks = parse_code_into_words(f);
+  remove_empty_strings(&codeblocks);
   merge_include_macros(&codeblocks);
   // merge_parenthesis(&codeblocks);
   merge_parenthesis_rec(&codeblocks, NULL, 0, 0);
+  remove_empty_strings(&codeblocks);
   for (size_t i = 0; i < codeblocks.size; i++) {
     printf("%7zu : %s\n", i, c_str(get(&codeblocks, i)));
   }
