@@ -122,17 +122,6 @@ Stack_String parse_code_into_words(FILE *stream) {
   return code;
 }
 
-Stack_String remove_empty_strings_leaky(Stack_String stack) {
-  Stack_String filtered = NewStack_String;
-  for (size_t i = 0; i < stack.size; i++) {
-    String line = stack.data[i];
-    if (line.size > 0) {
-      push(&filtered, line);
-    }
-  }
-  return filtered;
-}
-
 void remove_empty_strings(Stack_String *stack) {
   Stack_String filtered = NewStack_String;
   for (size_t i = 0; i < stack->size; i++) {
