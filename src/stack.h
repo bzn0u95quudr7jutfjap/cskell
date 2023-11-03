@@ -12,16 +12,16 @@
     size_t size;                                                                                                       \
     void (*const push)(STACK *, T);                                                                                    \
     void (*const pop)(STACK *);                                                                                        \
-    T *(*const get)(STACK *, size_t);                                                                                  \
+    T *(*const at)(STACK *, size_t);                                                                                   \
   };                                                                                                                   \
   void STACK##_push(STACK *, T);                                                                                       \
   void STACK##_pop(STACK *);                                                                                           \
-  T *STACK##_get(STACK *, size_t);                                                                                     \
+  T *STACK##_at(STACK *, size_t);                                                                                      \
   extern const STACK New##STACK;
 
 #define DEFINE_STACK(T, STACK)                                                                                         \
   const STACK New##STACK = {                                                                                           \
-      .data = NULL, .capacity = 0, .size = 0, .push = STACK##_push, .pop = STACK##_pop, .get = STACK##_get};           \
+      .data = NULL, .capacity = 0, .size = 0, .push = STACK##_push, .pop = STACK##_pop, .at = STACK##_at};             \
                                                                                                                        \
   void STACK##_push(STACK *stack, T data) {                                                                            \
     if (stack->size >= stack->capacity) {                                                                              \
@@ -48,7 +48,7 @@
     }                                                                                                                  \
     stack->size--;                                                                                                     \
   }                                                                                                                    \
-  T *STACK##_get(STACK *stack, size_t i) {                                                                             \
+  T *STACK##_at(STACK *stack, size_t i) {                                                                              \
     if (i < stack->size) {                                                                                             \
       return &(stack->data[i]);                                                                                        \
     }                                                                                                                  \
@@ -60,20 +60,20 @@
 
 #define push(STACK_P, DATA)                                                                                            \
   ({                                                                                                                   \
-    typeof(STACK_P) stack = STACK_P;                                                                                   \
-    stack->push(stack, DATA);                                                                                          \
+    typeof(STACK_P) function_calls_stack = STACK_P;                                                                    \
+    function_calls_stack->push(function_calls_stack, DATA);                                                            \
   })
 
 #define pop(STACK_P)                                                                                                   \
   ({                                                                                                                   \
-    typeof(STACK_P) stack = STACK_P;                                                                                   \
-    stack->pop(stack);                                                                                                 \
+    typeof(STACK_P) function_calls_stack = STACK_P;                                                                    \
+    function_calls_stack->pop(function_calls_stack);                                                                   \
   })
 
-#define at(STACK_P, INDEX)                                                                                            \
+#define at(STACK_P, INDEX)                                                                                             \
   ({                                                                                                                   \
-    typeof(STACK_P) stack = STACK_P;                                                                                   \
-    stack->get(stack, INDEX);                                                                                          \
+    typeof(STACK_P) function_calls_stack = STACK_P;                                                                    \
+    function_calls_stack->at(function_calls_stack, INDEX);                                                             \
   })
 
 #endif

@@ -125,10 +125,14 @@ Stack_String parse_code_into_words(FILE *stream) {
 void remove_empty_strings(Stack_String *stack) {
   Stack_String filtered = NewStack_String;
   for (size_t i = 0; i < stack->size; i++) {
-    String *line = stack->get(stack, i);
+    String *line = at(stack, i);
+    // String *line = ({
+    //   typeof(stack) istack = stack;
+    //   istack->get(istack, i);
+    // });
     if (line->size > 0) {
       push(&filtered, NewString);
-      move_into(stack->get(&filtered, -1), line);
+      move_into(at(&filtered, -1), line);
     }
   }
   free(stack->data);
@@ -143,9 +147,9 @@ void merge_include_macros_rec(Stack_String *stack, size_t i) {
     return;
   }
 
-  String *cancelletto = stack->get(stack, i);
-  String *includi = stack->get(stack, i + 1);
-  String *resto = stack->get(stack, i + 2);
+  String *cancelletto = at(stack, i);
+  String *includi = at(stack, i + 1);
+  String *resto = at(stack, i + 2);
 
   if (cancelletto == NULL || includi == NULL || resto == NULL) {
     return this(stack, i + 1);
@@ -168,8 +172,8 @@ void merge_include_macros_rec(Stack_String *stack, size_t i) {
     push(cancelletto, ' ');
     move_into(cancelletto, resto);
     size_t j = 3;
-    resto = stack->get(stack, i + j);
-    for (; resto != NULL && resto->size > 0 && resto->data[0] != '>'; j++, resto = stack->get(stack, i + j)) {
+    resto = at(stack, i + j);
+    for (; resto != NULL && resto->size > 0 && resto->data[0] != '>'; j++, resto = at(stack, i + j)) {
       move_into(cancelletto, resto);
     }
     if (resto != NULL && resto->size > 0 && resto->data[0] == '>') {
@@ -187,7 +191,7 @@ void merge_parenthesis_rec(Stack_String *stack, String *str, size_t i, size_t le
     return;
   }
 
-  String *line = stack->get(stack, i);
+  String *line = at(stack, i);
   if (line == NULL) {
     return;
   }
@@ -244,7 +248,7 @@ int main(int argc, const char *argv[]) {
   merge_parenthesis_rec(&codeblocks, NULL, 0, 0);
   remove_empty_strings(&codeblocks);
   for (size_t i = 0; i < codeblocks.size; i++) {
-    printf("%7zu : %s\n", i, c_str((&codeblocks)->get(&codeblocks, i)));
+    printf("%7zu : %s\n", i, c_str(at(&codeblocks, i)));
   }
 
   fclose(f);
