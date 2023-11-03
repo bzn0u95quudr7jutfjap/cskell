@@ -275,11 +275,13 @@ void merge_parenthesis_rec(Stack_String *stack, String *str, size_t i, size_t le
     if (str == NULL) {
       return this(stack, line, i + 1, level + 1);
     }
+    pop(str);
     move_into(str, line);
     return this(stack, str, i + 1, level + 1);
   }
 
   if (strcmp(c_str(line), ")") == 0) {
+    pop(str);
     move_into(str, line);
     if (level - 1 == 0) {
       return this(stack, NULL, i + 1, 0);
@@ -288,7 +290,9 @@ void merge_parenthesis_rec(Stack_String *stack, String *str, size_t i, size_t le
   }
 
   if (strcmp(c_str(line), ",") == 0) {
+    pop(str);
     move_into(str, line);
+    push(str, ' ');
     return this(stack, str, i + 1, level);
   }
 
@@ -296,8 +300,8 @@ void merge_parenthesis_rec(Stack_String *stack, String *str, size_t i, size_t le
     return this(stack, str, i + 1, level);
   }
 
-  push(str, ' ');
   move_into(str, line);
+  push(str, ' ');
   return this(stack, str, i + 1, level);
 }
 
