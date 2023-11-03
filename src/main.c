@@ -137,54 +137,6 @@ void remove_empty_strings(Stack_String *stack) {
   stack->capacity = filtered.capacity;
 }
 
-void merge_include_macros(Stack_String *stack) {
-  String cancelletto = from_cstr("#");
-  String include = from_cstr("include");
-  String lt = from_cstr("<");
-  String gt = from_cstr(">");
-  char *null_str = "null";
-
-  String *ca = NULL;
-  String *in = NULL;
-  String *le = NULL;
-  for (size_t i = 0; i < stack->size; i++) {
-    ca = stack->get(stack, i);
-    in = stack->get(stack, i + 1);
-    le = stack->get(stack, i + 2);
-    if (ca == NULL || in == NULL || le == NULL) {
-      break;
-    }
-    if (!(equals(ca, &cancelletto) && equals(in, &include))) {
-      continue;
-    }
-
-    if (le->data[0] == '"') {
-      move_into(ca, in);
-      push(ca, ' ');
-      move_into(ca, le);
-      i += 3;
-      continue;
-    }
-
-    if (!equals(le, &lt)) {
-      continue;
-    }
-
-    move_into(ca, in);
-    push(ca, ' ');
-    move_into(ca, le);
-    i += 3;
-    for (String *str = stack->get(stack, i); str != NULL && !equals(str, &gt) && i < stack->size; i++) {
-      move_into(ca, str);
-      str = stack->get(stack, i + 1);
-    }
-    if (stack->get(stack, i) == NULL) {
-      break;
-    }
-    move_into(ca, stack->get(stack, i));
-  }
-}
-
 void merge_include_macros_rec(Stack_String *stack, size_t i) {
   static void (*this)(Stack_String *, size_t) = merge_include_macros_rec;
   if (i >= stack->size) {
@@ -227,37 +179,6 @@ void merge_include_macros_rec(Stack_String *stack, size_t i) {
   }
 
   return this(stack, i + 1);
-}
-
-void merge_parenthesis(Stack_String *stack) {
-  String p_open = from_cstr("(");
-  String p_closed = from_cstr(")");
-  String coma = from_cstr(",");
-  String *p = NULL;
-  String *str = NULL;
-  for (size_t i = 0; i < stack->size; i++) {
-    p = stack->get(stack, i);
-    if (p == NULL) {
-      return;
-    }
-    if (p->size == 0 || !equals(p, &p_open)) {
-      continue;
-    }
-
-    for (str = stack->get(stack, ++i); str != NULL && !equals(str, &p_closed) && i < stack->size; i++) {
-      if (equals(str, &coma)) {
-        pop(p);
-      }
-      move_into(p, str);
-      push(p, ' ');
-      str = stack->get(stack, i + 1);
-    }
-    if (stack->get(stack, i) == NULL) {
-      break;
-    }
-    pop(p);
-    move_into(p, stack->get(stack, i));
-  }
 }
 
 void merge_parenthesis_rec(Stack_String *stack, String *str, size_t i, size_t level) {
@@ -319,9 +240,7 @@ int main(int argc, const char *argv[]) {
 
   Stack_String codeblocks = parse_code_into_words(f);
   remove_empty_strings(&codeblocks);
-  // merge_include_macros(&codeblocks);
   merge_include_macros_rec(&codeblocks, 0);
-  // merge_parenthesis(&codeblocks);
   merge_parenthesis_rec(&codeblocks, NULL, 0, 0);
   remove_empty_strings(&codeblocks);
   for (size_t i = 0; i < codeblocks.size; i++) {
