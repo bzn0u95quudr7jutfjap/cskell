@@ -6,6 +6,4 @@
 
 DECLARE_STACK(String, Stack_String);
 
-String * get(Stack_String * stack, size_t i);
-
 #endif 

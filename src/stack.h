@@ -12,13 +12,16 @@
     size_t size;                                                                                                       \
     void (*const push)(STACK *, T);                                                                                    \
     void (*const pop)(STACK *);                                                                                        \
+    T *(*const get)(STACK *, size_t);                                                                                  \
   };                                                                                                                   \
   void STACK##_push(STACK *, T);                                                                                       \
   void STACK##_pop(STACK *);                                                                                           \
+  T *STACK##_get(STACK *, size_t);                                                                                     \
   extern const STACK New##STACK;
 
 #define DEFINE_STACK(T, STACK)                                                                                         \
-  const STACK New##STACK = {.data = NULL, .capacity = 0, .size = 0, .push = STACK##_push, .pop = STACK##_pop};         \
+  const STACK New##STACK = {                                                                                           \
+      .data = NULL, .capacity = 0, .size = 0, .push = STACK##_push, .pop = STACK##_pop, .get = STACK##_get};           \
                                                                                                                        \
   void STACK##_push(STACK *stack, T data) {                                                                            \
     if (stack->size >= stack->capacity) {                                                                              \
@@ -44,6 +47,15 @@
       stack->data = data;                                                                                              \
     }                                                                                                                  \
     stack->size--;                                                                                                     \
+  }                                                                                                                    \
+  T *STACK##_get(STACK *stack, size_t i) {                                                                             \
+    if (i < stack->size) {                                                                                             \
+      return &(stack->data[i]);                                                                                        \
+    }                                                                                                                  \
+    if (i >= -(stack->size)) {                                                                                         \
+      return &(stack->data[i + stack->size]);                                                                          \
+    }                                                                                                                  \
+    return NULL;                                                                                                       \
   }
 
 #define push(STACK_P, DATA)                                                                                            \
@@ -56,6 +68,12 @@
   ({                                                                                                                   \
     typeof(STACK_P) stack = STACK_P;                                                                                   \
     stack->pop(stack);                                                                                                 \
+  })
+
+#define get(STACK_P, INDEX)                                                                                            \
+  ({                                                                                                                   \
+    typeof(STACK_P) stack = STACK_P;                                                                                   \
+    stack->get(stack, INDEX);                                                                                          \
   })
 
 #endif
