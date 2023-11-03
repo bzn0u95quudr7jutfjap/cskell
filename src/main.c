@@ -160,23 +160,23 @@ void merge_include_macros_rec(Stack_String *stack, size_t i) {
     return this(stack, i + 1);
   }
 
-  if (resto->data[0] == '"') {
+  if (*at(resto,0) == '"') {
     move_into(cancelletto, includi);
     push(cancelletto, ' ');
     move_into(cancelletto, resto);
     return this(stack, i + 3);
   }
 
-  if (resto->data[0] == '<') {
+  if (*at(resto,0) == '<') {
     move_into(cancelletto, includi);
     push(cancelletto, ' ');
     move_into(cancelletto, resto);
     size_t j = 3;
     resto = at(stack, i + j);
-    for (; resto != NULL && resto->size > 0 && resto->data[0] != '>'; j++, resto = at(stack, i + j)) {
+    for (; resto != NULL && resto->size > 0 && *at(resto,0) != '>'; j++, resto = at(stack, i + j)) {
       move_into(cancelletto, resto);
     }
-    if (resto != NULL && resto->size > 0 && resto->data[0] == '>') {
+    if (resto != NULL && resto->size > 0 && *at(resto,0) == '>') {
       move_into(cancelletto, resto);
     }
     return this(stack, i + j + 1);
