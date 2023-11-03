@@ -160,23 +160,23 @@ void merge_include_macros_rec(Stack_String *stack, size_t i) {
     return this(stack, i + 1);
   }
 
-  if (*at(resto,0) == '"') {
+  if (*at(resto, 0) == '"') {
     move_into(cancelletto, includi);
     push(cancelletto, ' ');
     move_into(cancelletto, resto);
     return this(stack, i + 3);
   }
 
-  if (*at(resto,0) == '<') {
+  if (*at(resto, 0) == '<') {
     move_into(cancelletto, includi);
     push(cancelletto, ' ');
     move_into(cancelletto, resto);
     size_t j = 3;
     resto = at(stack, i + j);
-    for (; resto != NULL && resto->size > 0 && *at(resto,0) != '>'; j++, resto = at(stack, i + j)) {
+    for (; resto != NULL && resto->size > 0 && *at(resto, 0) != '>'; j++, resto = at(stack, i + j)) {
       move_into(cancelletto, resto);
     }
-    if (resto != NULL && resto->size > 0 && *at(resto,0) == '>') {
+    if (resto != NULL && resto->size > 0 && *at(resto, 0) == '>') {
       move_into(cancelletto, resto);
     }
     return this(stack, i + j + 1);
@@ -195,8 +195,11 @@ void merge_parenthesis_rec(Stack_String *stack, String *str, size_t i, size_t le
   if (line == NULL) {
     return;
   }
+  if (line->size == 0) {
+    return this(stack, str, i + 1, level);
+  }
 
-  if (strcmp(c_str(line), "(") == 0) {
+  if (*at(line, 0) == '(') {
     if (str == NULL) {
       return this(stack, line, i + 1, level + 1);
     }
@@ -205,7 +208,7 @@ void merge_parenthesis_rec(Stack_String *stack, String *str, size_t i, size_t le
     return this(stack, str, i + 1, level + 1);
   }
 
-  if (strcmp(c_str(line), ")") == 0) {
+  if (*at(line, 0) == ')') {
     pop(str);
     move_into(str, line);
     if (level - 1 == 0) {
@@ -214,7 +217,7 @@ void merge_parenthesis_rec(Stack_String *stack, String *str, size_t i, size_t le
     return this(stack, str, i + 1, level - 1);
   }
 
-  if (strcmp(c_str(line), ",") == 0) {
+  if (*at(line, 0) == ',') {
     pop(str);
     move_into(str, line);
     push(str, ' ');
