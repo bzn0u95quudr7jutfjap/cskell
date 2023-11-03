@@ -125,10 +125,10 @@ Stack_String parse_code_into_words(FILE *stream) {
 void remove_empty_strings(Stack_String *stack) {
   Stack_String filtered = NewStack_String;
   for (size_t i = 0; i < stack->size; i++) {
-    String *line = get(stack, i);
+    String *line = stack->get(stack, i);
     if (line->size > 0) {
       push(&filtered, NewString);
-      move_into(get(&filtered, -1), line);
+      move_into(stack->get(&filtered, -1), line);
     }
   }
   free(stack->data);
@@ -148,9 +148,9 @@ void merge_include_macros(Stack_String *stack) {
   String *in = NULL;
   String *le = NULL;
   for (size_t i = 0; i < stack->size; i++) {
-    ca = get(stack, i);
-    in = get(stack, i + 1);
-    le = get(stack, i + 2);
+    ca = stack->get(stack, i);
+    in = stack->get(stack, i + 1);
+    le = stack->get(stack, i + 2);
     if (ca == NULL || in == NULL || le == NULL) {
       break;
     }
@@ -174,14 +174,14 @@ void merge_include_macros(Stack_String *stack) {
     push(ca, ' ');
     move_into(ca, le);
     i += 3;
-    for (String *str = get(stack, i); str != NULL && !equals(str, &gt) && i < stack->size; i++) {
+    for (String *str = stack->get(stack, i); str != NULL && !equals(str, &gt) && i < stack->size; i++) {
       move_into(ca, str);
-      str = get(stack, i + 1);
+      str = stack->get(stack, i + 1);
     }
-    if (get(stack, i) == NULL) {
+    if (stack->get(stack, i) == NULL) {
       break;
     }
-    move_into(ca, get(stack, i));
+    move_into(ca, stack->get(stack, i));
   }
 }
 
@@ -191,9 +191,9 @@ void merge_include_macros_rec(Stack_String *stack, size_t i) {
     return;
   }
 
-  String *cancelletto = get(stack, i);
-  String *includi = get(stack, i + 1);
-  String *resto = get(stack, i + 2);
+  String *cancelletto = stack->get(stack, i);
+  String *includi = stack->get(stack, i + 1);
+  String *resto = stack->get(stack, i + 2);
 
   if (cancelletto == NULL || includi == NULL || resto == NULL) {
     return this(stack, i + 1);
@@ -216,8 +216,8 @@ void merge_include_macros_rec(Stack_String *stack, size_t i) {
     push(cancelletto, ' ');
     move_into(cancelletto, resto);
     size_t j = 3;
-    resto = get(stack, i + j);
-    for (; resto != NULL && resto->size > 0 && resto->data[0] != '>'; j++, resto = get(stack, i + j)) {
+    resto = stack->get(stack, i + j);
+    for (; resto != NULL && resto->size > 0 && resto->data[0] != '>'; j++, resto = stack->get(stack, i + j)) {
       move_into(cancelletto, resto);
     }
     if (resto != NULL && resto->size > 0 && resto->data[0] == '>') {
@@ -236,7 +236,7 @@ void merge_parenthesis(Stack_String *stack) {
   String *p = NULL;
   String *str = NULL;
   for (size_t i = 0; i < stack->size; i++) {
-    p = get(stack, i);
+    p = stack->get(stack, i);
     if (p == NULL) {
       return;
     }
@@ -244,19 +244,19 @@ void merge_parenthesis(Stack_String *stack) {
       continue;
     }
 
-    for (str = get(stack, ++i); str != NULL && !equals(str, &p_closed) && i < stack->size; i++) {
+    for (str = stack->get(stack, ++i); str != NULL && !equals(str, &p_closed) && i < stack->size; i++) {
       if (equals(str, &coma)) {
         pop(p);
       }
       move_into(p, str);
       push(p, ' ');
-      str = get(stack, i + 1);
+      str = stack->get(stack, i + 1);
     }
-    if (get(stack, i) == NULL) {
+    if (stack->get(stack, i) == NULL) {
       break;
     }
     pop(p);
-    move_into(p, get(stack, i));
+    move_into(p, stack->get(stack, i));
   }
 }
 
@@ -266,7 +266,7 @@ void merge_parenthesis_rec(Stack_String *stack, String *str, size_t i, size_t le
     return;
   }
 
-  String *line = get(stack, i);
+  String *line = stack->get(stack, i);
   if (line == NULL) {
     return;
   }
@@ -325,7 +325,7 @@ int main(int argc, const char *argv[]) {
   merge_parenthesis_rec(&codeblocks, NULL, 0, 0);
   remove_empty_strings(&codeblocks);
   for (size_t i = 0; i < codeblocks.size; i++) {
-    printf("%7zu : %s\n", i, c_str(get(&codeblocks, i)));
+    printf("%7zu : %s\n", i, c_str((&codeblocks)->get(&codeblocks, i)));
   }
 
   fclose(f);

@@ -70,7 +70,7 @@
     stack->pop(stack);                                                                                                 \
   })
 
-#define get(STACK_P, INDEX)                                                                                            \
+#define at(STACK_P, INDEX)                                                                                            \
   ({                                                                                                                   \
     typeof(STACK_P) stack = STACK_P;                                                                                   \
     stack->get(stack, INDEX);                                                                                          \
