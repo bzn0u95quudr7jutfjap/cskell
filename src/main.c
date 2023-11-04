@@ -28,10 +28,13 @@ bool is_any_of(char c, size_t size, const char cs[]) {
   return false;
 }
 
-bool is_white(char c) {
-  static const char *const charset = "\n \t";
-  return is_any_of(c, strlen(charset), charset);
-}
+#define DEFINE_CSET(NAME, CSET)                                                                                        \
+  bool NAME(char c) {                                                                                                  \
+    static const char *const charset = CSET;                                                                           \
+    return is_any_of(c, strlen(charset), charset);                                                                     \
+  }
+
+DEFINE_CSET(is_white, " \n\t")
 
 bool is_speciale(char c) {
   static const char *const charset = "<>{}()[]#.;,+-*/";
@@ -214,6 +217,7 @@ void merge_parenthesis_rec(Stack_String *stack, String *str, size_t i, size_t le
     if (level - 1 == 0) {
       return this(stack, NULL, i + 1, 0);
     }
+    push(str, ' ');
     return this(stack, str, i + 1, level - 1);
   }
 
