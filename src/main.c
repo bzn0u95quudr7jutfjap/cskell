@@ -208,6 +208,8 @@ void merge_unary_operators(Stack_String *stack, size_t i) {
   String not = from_cstr("!");
   String address = from_cstr("&");
   String deref = from_cstr("*");
+  String increase = from_cstr("++");
+  String decrease = from_cstr("--");
 
   String *left = at(stack, i);
   String *centre = at(stack, i + 1);
@@ -216,10 +218,22 @@ void merge_unary_operators(Stack_String *stack, size_t i) {
     return;
   }
 
-  //if (equals(left, &not )) {
-  //  move_into(left, centre);
-  //  return merge_unary_operators(stack, i + 2);
-  //}
+  // if (equals(left, &not )) {
+  //   move_into(left, centre);
+  //   return merge_unary_operators(stack, i + 2);
+  // }
+
+  if (equals(centre, &increase) || equals(centre, &decrease)) {
+    if (is_possible_identifier(left) && !is_possible_identifier(right)) {
+      move_into(left, centre);
+      return merge_unary_operators(stack, i + 2);
+    }
+    if (!is_possible_identifier(left) && is_possible_identifier(right)) {
+      move_into(centre, right);
+      return merge_unary_operators(stack, i + 2);
+    }
+    return merge_unary_operators(stack, i + 1);
+  }
 
   if ((equals(centre, &deref) || equals(centre, &address)) && !is_possible_identifier(left) &&
       is_possible_identifier(right)) {
