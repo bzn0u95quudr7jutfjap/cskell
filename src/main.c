@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,16 +36,9 @@ bool is_any_of(char c, size_t size, const char cs[]) {
   }
 
 DEFINE_CSET(is_white, " \n\t")
-
-bool is_speciale(char c) {
-  static const char *const charset = "<>{}()[]#.;,+-*/";
-  return is_any_of(c, strlen(charset), charset);
-}
-
-bool is_string_delimiter(char c) {
-  static const char *const charset = "'\"";
-  return is_any_of(c, strlen(charset), charset);
-}
+DEFINE_CSET(is_special, "{}()[]#.;,")
+DEFINE_CSET(is_string_delimiter, "'\"")
+DEFINE_CSET(is_operator, "+-*/%!=&|^><")
 
 Stack_String parse_code_into_words(FILE *stream) {
   size_t pos = ftell(stream);
@@ -106,10 +100,21 @@ Stack_String parse_code_into_words(FILE *stream) {
       continue;
     }
 
-    if (is_speciale(c)) {
+    if (is_special(c)) {
       push(&code, NewString);
       String *line = &(code.data[code.size - 1]);
       push(line, c);
+      push(&code, NewString);
+      continue;
+    }
+
+    if (is_operator(c)) {
+      push(&code, NewString);
+      String *line = &(code.data[code.size - 1]);
+      push(line, c);
+      if (is_operator(fpeekc(stream))) {
+        push(line, fgetc(stream));
+      }
       push(&code, NewString);
       continue;
     }
@@ -142,6 +147,100 @@ void remove_empty_strings(Stack_String *stack) {
   stack->data = filtered.data;
   stack->size = filtered.size;
   stack->capacity = filtered.capacity;
+}
+
+// . -> & *
+
+bool is_possible_identifier(String *line) {
+  if (line->size == 0) {
+    return false;
+  }
+  char c = *at(line, 0);
+  if (!(islower(c) || isupper(c) || c == '_')) {
+    return false;
+  }
+  for (size_t i = 1; i < line->size; i++) {
+    c = *at(line, i);
+    if (!(islower(c) || isdigit(c) || isupper(c) || c == '_')) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool is_number(String *line) {
+  if (line->size == 0) {
+    return false;
+  }
+  if (line->size == 1) {
+    return isdigit(*at(line, 0));
+  }
+  char c = *at(line, 0), d = *at(line, 1);
+  if (c == '0' && (d == 'x' || d == 'X')) {
+    for (size_t i = 2; i < line->size; i++) {
+      if (!isxdigit(*at(line, i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  if (c == '0' && (d == 'b' || d == 'B')) {
+    for (size_t i = 2; i < line->size; i++) {
+      if (!isdigit(*at(line, i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  for (size_t i = 0; i < line->size; i++) {
+    if (!isdigit(*at(line, i))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void merge_unary_operators(Stack_String *stack, size_t i) {
+  String arrow = from_cstr("->");
+  String dot = from_cstr(".");
+  String not = from_cstr("!");
+  String address = from_cstr("&");
+  String deref = from_cstr("*");
+
+  String *left = at(stack, i);
+  String *centre = at(stack, i + 1);
+  String *right = at(stack, i + 2);
+  if (left == NULL || centre == NULL || right == NULL) {
+    return;
+  }
+
+  //if (equals(left, &not )) {
+  //  move_into(left, centre);
+  //  return merge_unary_operators(stack, i + 2);
+  //}
+
+  if ((equals(centre, &deref) || equals(centre, &address)) && !is_possible_identifier(left) &&
+      is_possible_identifier(right)) {
+    move_into(centre, right);
+    return merge_unary_operators(stack, i + 2);
+  }
+
+  if (equals(centre, &arrow)) {
+    move_into(left, centre);
+    move_into(left, right);
+    return merge_unary_operators(stack, i + 3);
+  }
+
+  if (equals(centre, &dot) &&
+      ((is_number(left) && is_number(right)) || (is_possible_identifier(left) && is_possible_identifier(right)))) {
+    move_into(left, centre);
+    move_into(left, right);
+    return merge_unary_operators(stack, i + 3);
+  }
+
+  return merge_unary_operators(stack, i + 1);
 }
 
 void merge_include_macros_rec(Stack_String *stack, size_t i) {
@@ -211,6 +310,10 @@ void merge_parenthesis_rec(Stack_String *stack, String *str, size_t i, size_t le
     return this(stack, str, i + 1, level + 1);
   }
 
+  if (str == NULL) {
+    return this(stack, str, i + 1, level);
+  }
+
   if (*at(line, 0) == ')') {
     pop(str);
     move_into(str, line);
@@ -252,6 +355,7 @@ int main(int argc, const char *argv[]) {
   Stack_String codeblocks = parse_code_into_words(f);
   remove_empty_strings(&codeblocks);
   merge_include_macros_rec(&codeblocks, 0);
+  merge_unary_operators(&codeblocks, 0);
   merge_parenthesis_rec(&codeblocks, NULL, 0, 0);
   remove_empty_strings(&codeblocks);
   for (size_t i = 0; i < codeblocks.size; i++) {
