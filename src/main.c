@@ -301,58 +301,30 @@ void merge_include_macros_rec(Stack_String *stack, size_t i) {
   return this(stack, i + 1);
 }
 
-void merge_parenthesis_adjacent_rec(Stack_String *stack, String *line, size_t i, size_t j) {
-  static void (*const this)(Stack_String *stack, String *line, size_t i, size_t j) = merge_parenthesis_adjacent_rec;
-  if (i >= j) {
-    return;
-  }
-
-  String *next = at(stack, i + 1);
-
-  if (line == NULL || next == NULL) {
-    return;
-  }
-
-  push(line,' ');
-  move_into(line, next);
-  return this(stack, line, i + 1, j);
-}
-
-size_t find_parentesi_chiusa(Stack_String *stack, size_t i, size_t j) {
-  if (j >= stack->size) {
-    return j;
-  }
-  String *line = at(stack, j);
-  if (line == NULL) {
-    return j;
-  }
-
-  if (line->size > 0 && *at(line, 0) == '(') {
-    return j;
-  }
-
-  if (line->size > 0 && *at(line, 0) == ')') {
-    merge_parenthesis_adjacent_rec(stack, at(stack, i), i, j);
-    return j;
-  }
-
-  return find_parentesi_chiusa(stack, i, j + 1);
-}
-
-void find_parentesi_aperta(Stack_String *stack, size_t i) {
+void m(Stack_String *stack, size_t i, size_t j, bool b) {
+  String pa = from_cstr("(");
+  String pc = from_cstr(")");
   if (i >= stack->size) {
     return;
   }
+
   String *line = at(stack, i);
-  if (line == NULL) {
-    return;
+  if (equals(line, &pa)) {
+    return m(stack, i + 1, i, true);
   }
 
-  if (line->size > 0 && *at(line, 0) == '(') {
-    return find_parentesi_aperta(stack, find_parentesi_chiusa(stack, i, i + 1));
+  if (b && equals(line, &pc)) {
+    String *line = at(stack, j);
+    move_into(line, at(stack, j + 1));
+    for (size_t k = j + 2; k < i; k++) {
+      push(line, ' ');
+      move_into(line, at(stack, k));
+    }
+    move_into(line, at(stack, i));
+    return m(stack, i + 1, i + 1, false);
   }
 
-  return find_parentesi_aperta(stack, i + 1);
+  return m(stack, i + 1, j, b);
 }
 
 int main(int argc, const char *argv[]) {
@@ -370,8 +342,21 @@ int main(int argc, const char *argv[]) {
   Stack_String codeblocks = parse_code_into_words(f);
   remove_empty_strings(&codeblocks);
   merge_include_macros_rec(&codeblocks, 0);
+  remove_empty_strings(&codeblocks);
   merge_unary_operators(&codeblocks, 0);
-  find_parentesi_aperta(&codeblocks, 0);
+  // ==============================================================
+  remove_empty_strings(&codeblocks);
+  for (size_t i = 0; i + 1 < codeblocks.size; i++) {
+    String *line = at(&codeblocks, i + 1);
+    if (*at(line, 0) == ',') {
+      move_into(at(&codeblocks, i), line);
+    }
+  }
+  remove_empty_strings(&codeblocks);
+  // ==============================================================
+  // find_parentesi_aperta(&codeblocks, 0);
+  // merge_level1_parentesi(&codeblocks);
+  m(&codeblocks, 0, 0, false);
   remove_empty_strings(&codeblocks);
   for (size_t i = 0; i < codeblocks.size; i++) {
     printf("%7zu : %s\n", i, c_str(at(&codeblocks, i)));
