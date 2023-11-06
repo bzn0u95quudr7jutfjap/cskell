@@ -313,6 +313,7 @@ void merge_parenthesis_adjacent_rec(Stack_String *stack, String *line, size_t i,
     return;
   }
 
+  push(line,' ');
   move_into(line, next);
   return this(stack, line, i + 1, j);
 }
@@ -326,8 +327,13 @@ size_t find_parentesi_chiusa(Stack_String *stack, size_t i, size_t j) {
     return j;
   }
 
+  if (line->size > 0 && *at(line, 0) == '(') {
+    return j;
+  }
+
   if (line->size > 0 && *at(line, 0) == ')') {
     merge_parenthesis_adjacent_rec(stack, at(stack, i), i, j);
+    return j;
   }
 
   return find_parentesi_chiusa(stack, i, j + 1);
