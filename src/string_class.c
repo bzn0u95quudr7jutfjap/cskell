@@ -1,5 +1,6 @@
 #include "string_class.h"
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 
 DEFINE_STACK(char, String);
@@ -25,18 +26,19 @@ String from_cstr(char *str) {
   return tmp;
 }
 
-void String_delete(String * str){
+void String_delete(String *str) {
   free(str->data);
   str->data = NULL;
   str->size = 0;
   str->capacity = 0;
 }
 
-bool is_empty(String * str){
-  return str->size == 0;
-}
+bool is_empty(String *str) { return str->size == 0; }
 
 void move_into(String *dst, String *src) {
+  if (dst == src) {
+    return;
+  }
   for (size_t i = 0; i < src->size; i++) {
     push(dst, src->data[i]);
   }
