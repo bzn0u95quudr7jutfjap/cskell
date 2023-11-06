@@ -301,57 +301,52 @@ void merge_include_macros_rec(Stack_String *stack, size_t i) {
   return this(stack, i + 1);
 }
 
-void merge_parenthesis_rec(Stack_String *stack, String *str, size_t i, size_t level) {
-  static void (*const this)(Stack_String *, String *, size_t, size_t) = merge_parenthesis_rec;
-  if (i >= stack->size) {
+void merge_parenthesis_adjacent_rec(Stack_String *stack, String *line, size_t i, size_t j) {
+  static void (*const this)(Stack_String *stack, String *line, size_t i, size_t j) = merge_parenthesis_adjacent_rec;
+  if (i >= j) {
     return;
   }
 
+  String *next = at(stack, i + 1);
+
+  if (line == NULL || next == NULL) {
+    return;
+  }
+
+  move_into(line, next);
+  return this(stack, line, i + 1, j);
+}
+
+size_t find_parentesi_chiusa(Stack_String *stack, size_t i, size_t j) {
+  if (j >= stack->size) {
+    return j;
+  }
+  String *line = at(stack, j);
+  if (line == NULL) {
+    return j;
+  }
+
+  if (line->size > 0 && *at(line, 0) == ')') {
+    merge_parenthesis_adjacent_rec(stack, at(stack, i), i, j);
+  }
+
+  return find_parentesi_chiusa(stack, i, j + 1);
+}
+
+void find_parentesi_aperta(Stack_String *stack, size_t i) {
+  if (i >= stack->size) {
+    return;
+  }
   String *line = at(stack, i);
   if (line == NULL) {
     return;
   }
-  if (line->size == 0) {
-    return this(stack, str, i + 1, level);
+
+  if (line->size > 0 && *at(line, 0) == '(') {
+    return find_parentesi_aperta(stack, find_parentesi_chiusa(stack, i, i + 1));
   }
 
-  if (*at(line, 0) == '(') {
-    if (str == NULL) {
-      return this(stack, line, i + 1, level + 1);
-    }
-    pop(str);
-    move_into(str, line);
-    return this(stack, str, i + 1, level + 1);
-  }
-
-  if (str == NULL) {
-    return this(stack, str, i + 1, level);
-  }
-
-  if (*at(line, 0) == ')') {
-    pop(str);
-    move_into(str, line);
-    if (level - 1 == 0) {
-      return this(stack, NULL, i + 1, 0);
-    }
-    push(str, ' ');
-    return this(stack, str, i + 1, level - 1);
-  }
-
-  if (*at(line, 0) == ',') {
-    pop(str);
-    move_into(str, line);
-    push(str, ' ');
-    return this(stack, str, i + 1, level);
-  }
-
-  if (level == 0) {
-    return this(stack, str, i + 1, level);
-  }
-
-  move_into(str, line);
-  push(str, ' ');
-  return this(stack, str, i + 1, level);
+  return find_parentesi_aperta(stack, i + 1);
 }
 
 int main(int argc, const char *argv[]) {
@@ -370,7 +365,7 @@ int main(int argc, const char *argv[]) {
   remove_empty_strings(&codeblocks);
   merge_include_macros_rec(&codeblocks, 0);
   merge_unary_operators(&codeblocks, 0);
-  merge_parenthesis_rec(&codeblocks, NULL, 0, 0);
+  find_parentesi_aperta(&codeblocks, 0);
   remove_empty_strings(&codeblocks);
   for (size_t i = 0; i < codeblocks.size; i++) {
     printf("%7zu : %s\n", i, c_str(at(&codeblocks, i)));
