@@ -48,6 +48,19 @@ Stack_String parse_code_into_words(FILE *stream) {
   push(&code, NewString);
   char c;
   while ((c = fgetc(stream)) != EOF) {
+    if (c == '#') {
+      push(&code, NewString);
+      String *line = &(code.data[code.size - 1]);
+      push(line, c);
+      while ((c = fgetc(stream)) != EOF) {
+        if (c == '\n' && *at(line,-1) != '\\') {
+          break;
+        }
+        push(line, c);
+      }
+      continue;
+    }
+
     // commenti
     if (c == '/' && fpeekc(stream) == '/') {
       push(&code, NewString);
@@ -422,7 +435,7 @@ int main(int argc, const char *argv[]) {
     String *line = at(&codeblocks, i);
     String *next = at(&codeblocks, i + 1);
     if (is_possible_identifier(line) && *at(next, -1) == ')') {
-      push(line,' ');
+      push(line, ' ');
       move_into(line, next);
       i++;
     }
