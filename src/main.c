@@ -53,7 +53,7 @@ Stack_String parse_code_into_words(FILE *stream) {
       String *line = &(code.data[code.size - 1]);
       push(line, c);
       while ((c = fgetc(stream)) != EOF) {
-        if (c == '\n' && *at(line,-1) != '\\') {
+        if (c == '\n' && *at(line, -1) != '\\') {
           break;
         }
         push(line, c);
@@ -392,6 +392,29 @@ void merge_linee(Stack_String *stack, size_t i, size_t j) {
   return merge_linee(stack, i + 1, j);
 }
 
+void m(Stack_String *stack, size_t i) {
+  if (i >= stack->size) {
+    return;
+  }
+
+  String *sx = at(stack, i + 0);
+  String *dx = at(stack, i + 1);
+
+  if (sx == NULL || dx == NULL) {
+    return;
+  }
+
+  char *c = at(sx, 0);
+  char *d = at(dx, 0);
+  if (c != NULL && (*c == '{' || *c == ';') && d != NULL && *d != '}') {
+    push(sx, ' ');
+    move_into(sx, dx);
+    return m(stack, i + 2);
+  }
+
+  return m(stack, i + 1);
+}
+
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
     fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE>\n\n", argv[0]);
@@ -440,6 +463,8 @@ int main(int argc, const char *argv[]) {
       i++;
     }
   }
+  remove_empty_strings(&codeblocks);
+  m(&codeblocks, 0);
   remove_empty_strings(&codeblocks);
 
   for (size_t i = 0; i < codeblocks.size; i++) {
