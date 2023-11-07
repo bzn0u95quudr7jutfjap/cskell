@@ -302,8 +302,6 @@ void merge_include_macros_rec(Stack_String *stack, size_t i) {
 }
 
 void m(Stack_String *stack, size_t i, size_t j, bool b) {
-  String pa = from_cstr("(");
-  String pc = from_cstr(")");
   if (i >= stack->size) {
     return;
   }
