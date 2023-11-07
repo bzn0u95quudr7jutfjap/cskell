@@ -374,7 +374,7 @@ void merge_linee(Stack_String *stack, size_t i, size_t j) {
   }
 
   String *line = at(stack, i);
-  char c = *at(line,0);
+  char c = *at(line, 0);
 
   if (c == '#' || c == '{' || c == '}' || c == '\\' || c == '/') {
     return merge_linee(stack, i + 1, i + 1);
@@ -407,7 +407,7 @@ void merge_inizioriga_istruzione(Stack_String *stack, size_t i) {
 
   char *c = at(sx, 0);
   char *d = at(dx, 0);
-  if (c != NULL && (*c == '{' || *c == ';') && d != NULL && *d != '}') {
+  if (((*c == '{' || *c == ';') && *d != '}') && (!is_any_of(*c, 2, "#/") && !is_any_of(*d, 2, "#/"))) {
     push(sx, ' ');
     move_into(sx, dx);
     return merge_inizioriga_istruzione(stack, i + 2);
