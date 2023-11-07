@@ -330,7 +330,7 @@ void merge_level1_parentesi(Stack_String *stack, size_t i, size_t j, bool b) {
   return merge_level1_parentesi(stack, i + 1, j, b);
 }
 
-void m(Stack_String *stack, size_t i) {
+void merge_parentesi_identificatori(Stack_String *stack, size_t i) {
   if (i >= stack->size) {
     return;
   }
@@ -344,15 +344,15 @@ void m(Stack_String *stack, size_t i) {
   char *c = at(next, 0);
   if (c != NULL && *c == '[') {
     move_into(line, next);
-    return m(stack, i + 2);
+    return merge_parentesi_identificatori(stack, i + 2);
   }
 
   if (is_possible_identifier(line) && next->size > 1 && c != NULL && *c == '(') {
     move_into(line, next);
-    return m(stack, i + 2);
+    return merge_parentesi_identificatori(stack, i + 2);
   }
 
-  return m(stack, i + 1);
+  return merge_parentesi_identificatori(stack, i + 1);
 }
 
 int main(int argc, const char *argv[]) {
@@ -385,7 +385,7 @@ int main(int argc, const char *argv[]) {
   // find_parentesi_aperta(&codeblocks, 0);
   // merge_level1_parentesi(&codeblocks);
   merge_level1_parentesi(&codeblocks, 0, 0, false);
-  m(&codeblocks, 0);
+  merge_parentesi_identificatori(&codeblocks, 0);
   remove_empty_strings(&codeblocks);
   for (size_t i = 0; i < codeblocks.size; i++) {
     printf("%7zu : %s\n", i, c_str(at(&codeblocks, i)));
