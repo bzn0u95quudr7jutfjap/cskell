@@ -493,8 +493,20 @@ int main(int argc, const char *argv[]) {
   }
   remove_empty_strings(&codeblocks);
   merge_inizioriga_istruzione(&codeblocks, 0);
+
   remove_empty_strings(&codeblocks);
-  m(&codeblocks, 0, 0, false);
+  size_t num_open_braces;
+  do {
+    m(&codeblocks, 0, 0, false);
+    num_open_braces = 0;
+    for (size_t i = 0; i < codeblocks.size; i++) {
+      String *line = at(&codeblocks, i);
+      if (*at(line, 0) == '{') {
+        num_open_braces++;
+      }
+    }
+  } while (num_open_braces > 0);
+
   remove_empty_strings(&codeblocks);
 
   for (size_t i = 0; i < codeblocks.size; i++) {
