@@ -301,7 +301,7 @@ void merge_include_macros_rec(Stack_String *stack, size_t i) {
   return this(stack, i + 1);
 }
 
-void m(Stack_String *stack, size_t i, size_t j, bool b) {
+void merge_level1_parentesi(Stack_String *stack, size_t i, size_t j, bool b) {
   if (i >= stack->size) {
     return;
   }
@@ -309,8 +309,8 @@ void m(Stack_String *stack, size_t i, size_t j, bool b) {
   String *line = at(stack, i);
   char *c = at(line, 0);
 
-  if (*c == '(' || *c == '[' ) {
-    return m(stack, i + 1, i, true);
+  if (*c == '(' || *c == '[') {
+    return merge_level1_parentesi(stack, i + 1, i, true);
   }
 
   if (b && (*c == ')' || *c == ']')) {
@@ -321,10 +321,10 @@ void m(Stack_String *stack, size_t i, size_t j, bool b) {
       move_into(line, at(stack, k));
     }
     move_into(line, at(stack, i));
-    return m(stack, i + 1, i + 1, false);
+    return merge_level1_parentesi(stack, i + 1, i + 1, false);
   }
 
-  return m(stack, i + 1, j, b);
+  return merge_level1_parentesi(stack, i + 1, j, b);
 }
 
 int main(int argc, const char *argv[]) {
@@ -356,7 +356,7 @@ int main(int argc, const char *argv[]) {
   // ==============================================================
   // find_parentesi_aperta(&codeblocks, 0);
   // merge_level1_parentesi(&codeblocks);
-  m(&codeblocks, 0, 0, false);
+  merge_level1_parentesi(&codeblocks, 0, 0, false);
   remove_empty_strings(&codeblocks);
   for (size_t i = 0; i < codeblocks.size; i++) {
     printf("%7zu : %s\n", i, c_str(at(&codeblocks, i)));
