@@ -416,7 +416,7 @@ void merge_inizioriga_istruzione(Stack_String *stack, size_t i) {
   return merge_inizioriga_istruzione(stack, i + 1);
 }
 
-void m(Stack_String *stack, size_t i, size_t j, bool closing) {
+void pad_braces(Stack_String *stack, size_t i, size_t j, bool closing) {
   if (i >= stack->size) {
     return;
   }
@@ -424,7 +424,7 @@ void m(Stack_String *stack, size_t i, size_t j, bool closing) {
   String *line = at(stack, i);
   char *c = at(line, 0);
   if (c != NULL && *c == '{') {
-    return m(stack, i + 1, i, true);
+    return pad_braces(stack, i + 1, i, true);
   }
 
   if (closing && c != NULL && *c == '}') {
@@ -437,10 +437,10 @@ void m(Stack_String *stack, size_t i, size_t j, bool closing) {
       line->size = pad.size;
       line->capacity = pad.capacity;
     }
-    return m(stack, i + 1, i + 1, false);
+    return pad_braces(stack, i + 1, i + 1, false);
   }
 
-  return m(stack, i + 1, j, closing);
+  return pad_braces(stack, i + 1, j, closing);
 }
 
 int main(int argc, const char *argv[]) {
@@ -497,7 +497,7 @@ int main(int argc, const char *argv[]) {
   remove_empty_strings(&codeblocks);
   size_t num_open_braces;
   do {
-    m(&codeblocks, 0, 0, false);
+    pad_braces(&codeblocks, 0, 0, false);
     num_open_braces = 0;
     for (size_t i = 0; i < codeblocks.size; i++) {
       String *line = at(&codeblocks, i);
