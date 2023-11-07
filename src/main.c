@@ -362,7 +362,7 @@ void merge_linee(Stack_String *stack, size_t i, size_t j) {
 
   String *line = at(stack, i);
 
-  if (*at(line, 0) == '{' || *at(line, 0) == '}') {
+  if (*at(line, 0) == '{' || *at(line, 0) == '}' || *at(line, 0) == '\\') {
     return merge_linee(stack, i + 1, i + 1);
   }
 
