@@ -415,6 +415,33 @@ void merge_inizioriga_istruzione(Stack_String *stack, size_t i) {
   return merge_inizioriga_istruzione(stack, i + 1);
 }
 
+void m(Stack_String *stack, size_t i, size_t j, bool closing) {
+  if (i >= stack->size) {
+    return;
+  }
+
+  String *line = at(stack, i);
+  char *c = at(line, 0);
+  if (c != NULL && *c == '{') {
+    return m(stack, i + 1, i, true);
+  }
+
+  if (closing && c != NULL && *c == '}') {
+    for (size_t k = j; k <= i; k++) {
+      line = at(stack, k);
+      String pad = from_cstr("  ");
+      move_into(&pad, line);
+      free(line->data);
+      line->data = pad.data;
+      line->size = pad.size;
+      line->capacity = pad.capacity;
+    }
+    return m(stack, i + 1, i + 1, false);
+  }
+
+  return m(stack, i + 1, j, closing);
+}
+
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
     fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE>\n\n", argv[0]);
@@ -465,6 +492,8 @@ int main(int argc, const char *argv[]) {
   }
   remove_empty_strings(&codeblocks);
   merge_inizioriga_istruzione(&codeblocks, 0);
+  remove_empty_strings(&codeblocks);
+  m(&codeblocks, 0, 0, false);
   remove_empty_strings(&codeblocks);
 
   for (size_t i = 0; i < codeblocks.size; i++) {
