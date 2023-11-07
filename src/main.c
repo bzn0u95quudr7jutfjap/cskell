@@ -355,7 +355,7 @@ void merge_parentesi_identificatori(Stack_String *stack, size_t i) {
   return merge_parentesi_identificatori(stack, i + 1);
 }
 
-void m(Stack_String *stack, size_t i, size_t j) {
+void merge_linee(Stack_String *stack, size_t i, size_t j) {
   if (i >= stack->size) {
     return;
   }
@@ -363,7 +363,7 @@ void m(Stack_String *stack, size_t i, size_t j) {
   String *line = at(stack, i);
 
   if (*at(line, 0) == '{' || *at(line, 0) == '}') {
-    return m(stack, i + 1, i + 1);
+    return merge_linee(stack, i + 1, i + 1);
   }
 
   if (*at(line, 0) == ';') {
@@ -373,10 +373,10 @@ void m(Stack_String *stack, size_t i, size_t j) {
       push(line, ' ');
       move_into(line, next);
     }
-    return m(stack, i + 1, i + 1);
+    return merge_linee(stack, i + 1, i + 1);
   }
 
-  return m(stack, i + 1, j);
+  return merge_linee(stack, i + 1, j);
 }
 
 int main(int argc, const char *argv[]) {
@@ -416,7 +416,7 @@ int main(int argc, const char *argv[]) {
   } while (len > codeblocks.size);
 
   remove_empty_strings(&codeblocks);
-  m(&codeblocks, 0, 0);
+  merge_linee(&codeblocks, 0, 0);
   remove_empty_strings(&codeblocks);
 
   for (size_t i = 0; i < codeblocks.size; i++) {
