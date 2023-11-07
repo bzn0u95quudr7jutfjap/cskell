@@ -313,7 +313,7 @@ void m(Stack_String *stack, size_t i, size_t j, bool b) {
     return m(stack, i + 1, i, true);
   }
 
-  if (b && equals(line, &pc)) {
+  if (b && *at(line, 0) == ')') {
     String *line = at(stack, j);
     move_into(line, at(stack, j + 1));
     for (size_t k = j + 2; k < i; k++) {
