@@ -355,6 +355,30 @@ void merge_parentesi_identificatori(Stack_String *stack, size_t i) {
   return merge_parentesi_identificatori(stack, i + 1);
 }
 
+void m(Stack_String *stack, size_t i, size_t j) {
+  if (i >= stack->size) {
+    return;
+  }
+
+  String *line = at(stack, i);
+
+  if (*at(line, 0) == '{' || *at(line, 0) == '}') {
+    return m(stack, i + 1, i + 1);
+  }
+
+  if (*at(line, 0) == ';') {
+    line = at(stack, j);
+    for (size_t k = j + 1; k < i; k++) {
+      String *next = at(stack, k);
+      push(line, ' ');
+      move_into(line, next);
+    }
+    return m(stack, i + 1, i + 1);
+  }
+
+  return m(stack, i + 1, j);
+}
+
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
     fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE>\n\n", argv[0]);
@@ -392,6 +416,9 @@ int main(int argc, const char *argv[]) {
   } while (len > codeblocks.size);
 
   remove_empty_strings(&codeblocks);
+  m(&codeblocks, 0, 0);
+  remove_empty_strings(&codeblocks);
+
   for (size_t i = 0; i < codeblocks.size; i++) {
     printf("%7zu : %s\n", i, c_str(at(&codeblocks, i)));
   }
