@@ -309,11 +309,13 @@ void m(Stack_String *stack, size_t i, size_t j, bool b) {
   }
 
   String *line = at(stack, i);
-  if (equals(line, &pa)) {
+  char *c = at(line, 0);
+
+  if (*c == '(' || *c == '[' ) {
     return m(stack, i + 1, i, true);
   }
 
-  if (b && *at(line, 0) == ')') {
+  if (b && (*c == ')' || *c == ']')) {
     String *line = at(stack, j);
     move_into(line, at(stack, j + 1));
     for (size_t k = j + 2; k < i; k++) {
