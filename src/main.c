@@ -439,10 +439,12 @@ void pad_braces(Stack_String *stack, size_t i, size_t j, bool closing) {
       }
       line = at(stack, k);
       char c = *at(line, 0);
-      if (c != ';' && c != '}') {
-        push(&pad, ';');
-        push(&pad, ' ');
-      }
+      // if (c != ';' && c != '}') {
+      //   push(&pad, ';');
+      //   if (!is_white(c)) {
+      //     push(&pad, ' ');
+      //   }
+      // }
       move_into(&pad, line);
       free(line->data);
       line->data = pad.data;
