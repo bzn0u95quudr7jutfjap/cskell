@@ -428,9 +428,21 @@ void pad_braces(Stack_String *stack, size_t i, size_t j, bool closing) {
   }
 
   if (closing && c != NULL && *c == '}') {
-    for (size_t k = j; k <= i; k++) {
+    line = at(stack, j - 1);
+    push(line, ' ');
+    size_t padding = line->size;
+    move_into(line, at(stack, j));
+    for (size_t k = j + 1; k <= i; k++) {
+      String pad = NewString;
+      for (size_t a = 0; a < padding; a++) {
+        push(&pad, ' ');
+      }
       line = at(stack, k);
-      String pad = from_cstr("  ");
+      char c = *at(line, 0);
+      if (c != ';' && c != '}') {
+        push(&pad, ';');
+        push(&pad, ' ');
+      }
       move_into(&pad, line);
       free(line->data);
       line->data = pad.data;
@@ -498,6 +510,7 @@ int main(int argc, const char *argv[]) {
   size_t num_open_braces;
   do {
     pad_braces(&codeblocks, 0, 0, false);
+    remove_empty_strings(&codeblocks);
     num_open_braces = 0;
     for (size_t i = 0; i < codeblocks.size; i++) {
       String *line = at(&codeblocks, i);
