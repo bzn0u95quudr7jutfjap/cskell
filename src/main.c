@@ -374,12 +374,13 @@ void merge_linee(Stack_String *stack, size_t i, size_t j) {
   }
 
   String *line = at(stack, i);
+  char c = *at(line,0);
 
-  if (*at(line, 0) == '{' || *at(line, 0) == '}' || *at(line, 0) == '\\') {
+  if (c == '#' || c == '{' || c == '}' || c == '\\' || c == '/') {
     return merge_linee(stack, i + 1, i + 1);
   }
 
-  if (*at(line, 0) == ';') {
+  if (c == ';') {
     line = at(stack, j);
     for (size_t k = j + 1; k < i; k++) {
       String *next = at(stack, k);
