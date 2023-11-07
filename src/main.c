@@ -392,7 +392,7 @@ void merge_linee(Stack_String *stack, size_t i, size_t j) {
   return merge_linee(stack, i + 1, j);
 }
 
-void m(Stack_String *stack, size_t i) {
+void merge_inizioriga_istruzione(Stack_String *stack, size_t i) {
   if (i >= stack->size) {
     return;
   }
@@ -409,10 +409,10 @@ void m(Stack_String *stack, size_t i) {
   if (c != NULL && (*c == '{' || *c == ';') && d != NULL && *d != '}') {
     push(sx, ' ');
     move_into(sx, dx);
-    return m(stack, i + 2);
+    return merge_inizioriga_istruzione(stack, i + 2);
   }
 
-  return m(stack, i + 1);
+  return merge_inizioriga_istruzione(stack, i + 1);
 }
 
 int main(int argc, const char *argv[]) {
@@ -464,7 +464,7 @@ int main(int argc, const char *argv[]) {
     }
   }
   remove_empty_strings(&codeblocks);
-  m(&codeblocks, 0);
+  merge_inizioriga_istruzione(&codeblocks, 0);
   remove_empty_strings(&codeblocks);
 
   for (size_t i = 0; i < codeblocks.size; i++) {
