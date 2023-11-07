@@ -418,6 +418,16 @@ int main(int argc, const char *argv[]) {
   remove_empty_strings(&codeblocks);
   merge_linee(&codeblocks, 0, 0);
   remove_empty_strings(&codeblocks);
+  for (size_t i = 0; i + 1 < codeblocks.size; i++) {
+    String *line = at(&codeblocks, i);
+    String *next = at(&codeblocks, i + 1);
+    if (is_possible_identifier(line) && *at(next, -1) == ')') {
+      push(line,' ');
+      move_into(line, next);
+      i++;
+    }
+  }
+  remove_empty_strings(&codeblocks);
 
   for (size_t i = 0; i < codeblocks.size; i++) {
     printf("%7zu : %s\n", i, c_str(at(&codeblocks, i)));
