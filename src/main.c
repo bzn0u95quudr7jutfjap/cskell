@@ -48,6 +48,19 @@ Stack_String parse_code_into_words(FILE *stream) {
   push(&code, NewString);
   char c;
   while ((c = fgetc(stream)) != EOF) {
+    if (c == '#') {
+      push(&code, NewString);
+      String *line = &(code.data[code.size - 1]);
+      push(line, c);
+      while ((c = fgetc(stream)) != EOF) {
+        if (c == '\n' && *at(line, -1) != '\\') {
+          break;
+        }
+        push(line, c);
+      }
+      continue;
+    }
+
     // commenti
     if (c == '/' && fpeekc(stream) == '/') {
       push(&code, NewString);
@@ -361,12 +374,13 @@ void merge_linee(Stack_String *stack, size_t i, size_t j) {
   }
 
   String *line = at(stack, i);
+  char c = *at(line, 0);
 
-  if (*at(line, 0) == '{' || *at(line, 0) == '}' || *at(line, 0) == '\\') {
+  if (c == '#' || c == '{' || c == '}' || c == '\\' || c == '/') {
     return merge_linee(stack, i + 1, i + 1);
   }
 
-  if (*at(line, 0) == ';') {
+  if (c == ';') {
     line = at(stack, j);
     for (size_t k = j + 1; k < i; k++) {
       String *next = at(stack, k);
@@ -377,6 +391,70 @@ void merge_linee(Stack_String *stack, size_t i, size_t j) {
   }
 
   return merge_linee(stack, i + 1, j);
+}
+
+void merge_inizioriga_istruzione(Stack_String *stack, size_t i) {
+  if (i >= stack->size) {
+    return;
+  }
+
+  String *sx = at(stack, i + 0);
+  String *dx = at(stack, i + 1);
+
+  if (sx == NULL || dx == NULL) {
+    return;
+  }
+
+  char *c = at(sx, 0);
+  char *d = at(dx, 0);
+  if (((*c == '{' || *c == ';') && *d != '}') && (!is_any_of(*c, 2, "#/") && !is_any_of(*d, 2, "#/"))) {
+    push(sx, ' ');
+    move_into(sx, dx);
+    return merge_inizioriga_istruzione(stack, i + 2);
+  }
+
+  return merge_inizioriga_istruzione(stack, i + 1);
+}
+
+void pad_braces(Stack_String *stack, size_t i, size_t j, bool closing) {
+  if (i >= stack->size) {
+    return;
+  }
+
+  String *line = at(stack, i);
+  char *c = at(line, 0);
+  if (c != NULL && *c == '{') {
+    return pad_braces(stack, i + 1, i, true);
+  }
+
+  if (closing && c != NULL && *c == '}') {
+    line = at(stack, j - 1);
+    push(line, ' ');
+    size_t padding = line->size;
+    move_into(line, at(stack, j));
+    for (size_t k = j + 1; k <= i; k++) {
+      String pad = NewString;
+      for (size_t a = 0; a < padding; a++) {
+        push(&pad, ' ');
+      }
+      line = at(stack, k);
+      char c = *at(line, 0);
+      // if (c != ';' && c != '}') {
+      //   push(&pad, ';');
+      //   if (!is_white(c)) {
+      //     push(&pad, ' ');
+      //   }
+      // }
+      move_into(&pad, line);
+      free(line->data);
+      line->data = pad.data;
+      line->size = pad.size;
+      line->capacity = pad.capacity;
+    }
+    return pad_braces(stack, i + 1, i + 1, false);
+  }
+
+  return pad_braces(stack, i + 1, j, closing);
 }
 
 int main(int argc, const char *argv[]) {
@@ -422,11 +500,28 @@ int main(int argc, const char *argv[]) {
     String *line = at(&codeblocks, i);
     String *next = at(&codeblocks, i + 1);
     if (is_possible_identifier(line) && *at(next, -1) == ')') {
-      push(line,' ');
+      push(line, ' ');
       move_into(line, next);
       i++;
     }
   }
+  remove_empty_strings(&codeblocks);
+  merge_inizioriga_istruzione(&codeblocks, 0);
+
+  remove_empty_strings(&codeblocks);
+  size_t num_open_braces;
+  do {
+    pad_braces(&codeblocks, 0, 0, false);
+    remove_empty_strings(&codeblocks);
+    num_open_braces = 0;
+    for (size_t i = 0; i < codeblocks.size; i++) {
+      String *line = at(&codeblocks, i);
+      if (*at(line, 0) == '{') {
+        num_open_braces++;
+      }
+    }
+  } while (num_open_braces > 0);
+
   remove_empty_strings(&codeblocks);
 
   for (size_t i = 0; i < codeblocks.size; i++) {
