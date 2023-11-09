@@ -25,10 +25,10 @@ Dopo
 
 ### Linux
 
-> mkdir -p build/ && cd build/ && cmake .. && make
+    mkdir -p build/ && cd build/ && cmake .. && make
 
 ## Come usare
 
-> ./haskellinator <FILE>
+    ./haskellinator <FILE>
 
 l'output verra stampato sul terminale in stdout
