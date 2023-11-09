@@ -2,7 +2,7 @@
 
 ## Descrizione
 
-Haskellinator prende in input un file di codice (attualmente solo c) e lo trasforma in haskell-style.
+Haskellinator trasforma codice (attualmente solo c) in haskell-style.
 
 
 Prima
