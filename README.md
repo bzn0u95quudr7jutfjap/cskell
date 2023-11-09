@@ -23,7 +23,7 @@ Dopo
 
 ## Compilazione
 
-### Linux
+### CMake
 
     mkdir -p build/ && cd build/ && cmake .. && make
 
