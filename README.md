@@ -2,19 +2,19 @@
 
 ## Descrizione
 
-Haskellinator prende in input un file di codice (attualmente c (e neanche tutto)) e lo trasforma in haskell-style.
+Haskellinator prende in input un file di codice (attualmente solo c) e lo trasforma in haskell-style.
 
 
 Prima
 
-    while() {
+    while(cond) {
         func1();
         func2();
     }
 
 Dopo
 
-    while()
+    while(cond)
         { func1()
         ; func2()
         ;
