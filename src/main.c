@@ -428,28 +428,40 @@ void pad_braces(Stack_String *stack, size_t i, size_t j, bool closing, bool peso
   }
 
   if (closing && c != NULL && *c == '}') {
-    line = at(stack, j - 1);
-    push(line, ' ');
-    size_t padding = line->size;
-    move_into(line, at(stack, j));
-    for (size_t k = j + 1; k <= i; k++) {
-      String pad = NewString;
-      for (size_t a = 0; a < padding; a++) {
-        push(&pad, ' ');
+    if (peso_a_destra) {
+      line = at(stack, j - 1);
+      push(line, ' ');
+      size_t padding = line->size;
+      move_into(line, at(stack, j));
+      for (size_t k = j + 1; k <= i; k++) {
+        String pad = NewString;
+        for (size_t a = 0; a < padding; a++) {
+          push(&pad, ' ');
+        }
+        line = at(stack, k);
+        char c = *at(line, 0);
+        // if (c != ';' && c != '}') {
+        //   push(&pad, ';');
+        //   if (!is_white(c)) {
+        //     push(&pad, ' ');
+        //   }
+        // }
+        move_into(&pad, line);
+        free(line->data);
+        line->data = pad.data;
+        line->size = pad.size;
+        line->capacity = pad.capacity;
       }
-      line = at(stack, k);
-      char c = *at(line, 0);
-      // if (c != ';' && c != '}') {
-      //   push(&pad, ';');
-      //   if (!is_white(c)) {
-      //     push(&pad, ' ');
-      //   }
-      // }
-      move_into(&pad, line);
-      free(line->data);
-      line->data = pad.data;
-      line->size = pad.size;
-      line->capacity = pad.capacity;
+    } else {
+      for (size_t k = j; k <= i; k++) {
+        line = at(stack, k);
+        String pad = from_cstr("  ");
+        move_into(&pad, line);
+        free(line->data);
+        line->data = pad.data;
+        line->size = pad.size;
+        line->capacity = pad.capacity;
+      }
     }
     return pad_braces(stack, i + 1, i + 1, false, peso_a_destra);
   }
