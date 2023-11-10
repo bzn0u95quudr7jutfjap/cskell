@@ -31,7 +31,8 @@ Dopo
 
 ### CMake
 
-    mkdir -p build/ && cd build/ && cmake .. && make
+    cmake .
+    make
 
 ## Come usare
 
