@@ -471,7 +471,7 @@ void pad_braces(Stack_String *stack, size_t i, size_t j, bool closing, bool peso
 
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
-    fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE> [--pesato-destra]\n\n", argv[0]);
+    fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE> [--pesato-a-destra]\n\n", argv[0]);
     return 1;
   }
 
@@ -481,7 +481,7 @@ int main(int argc, const char *argv[]) {
     return 2;
   }
 
-  bool pesato_a_destra = (argc == 3 && strcmp(argv[2], "--pesato-destra"));
+  bool pesato_a_destra = (argc == 3 && strcmp(argv[2], "--pesato-a-destra"));
 
   Stack_String codeblocks = parse_code_into_words(f);
   remove_empty_strings(&codeblocks);
