@@ -416,7 +416,7 @@ void merge_inizioriga_istruzione(Stack_String *stack, size_t i) {
   return merge_inizioriga_istruzione(stack, i + 1);
 }
 
-void pad_braces(Stack_String *stack, size_t i, size_t j, bool closing) {
+void pad_braces(Stack_String *stack, size_t i, size_t j, bool closing, bool peso_a_destra) {
   if (i >= stack->size) {
     return;
   }
@@ -424,7 +424,7 @@ void pad_braces(Stack_String *stack, size_t i, size_t j, bool closing) {
   String *line = at(stack, i);
   char *c = at(line, 0);
   if (c != NULL && *c == '{') {
-    return pad_braces(stack, i + 1, i, true);
+    return pad_braces(stack, i + 1, i, true, peso_a_destra);
   }
 
   if (closing && c != NULL && *c == '}') {
@@ -451,15 +451,15 @@ void pad_braces(Stack_String *stack, size_t i, size_t j, bool closing) {
       line->size = pad.size;
       line->capacity = pad.capacity;
     }
-    return pad_braces(stack, i + 1, i + 1, false);
+    return pad_braces(stack, i + 1, i + 1, false, peso_a_destra);
   }
 
-  return pad_braces(stack, i + 1, j, closing);
+  return pad_braces(stack, i + 1, j, closing, peso_a_destra);
 }
 
 int main(int argc, const char *argv[]) {
   if (argc == 1) {
-    fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE>\n\n", argv[0]);
+    fprintf(stderr, "File da formattare non dato\n\nSINTASSI: %s <FILE> [--pesato-destra]\n\n", argv[0]);
     return 1;
   }
 
@@ -468,6 +468,8 @@ int main(int argc, const char *argv[]) {
     fprintf(stderr, "File %s invalido\n\n", argv[1]);
     return 2;
   }
+
+  bool pesato_a_destra = (argc == 3 && strcmp(argv[2], "--pesato-destra"));
 
   Stack_String codeblocks = parse_code_into_words(f);
   remove_empty_strings(&codeblocks);
@@ -511,7 +513,7 @@ int main(int argc, const char *argv[]) {
   remove_empty_strings(&codeblocks);
   size_t num_open_braces;
   do {
-    pad_braces(&codeblocks, 0, 0, false);
+    pad_braces(&codeblocks, 0, 0, false, pesato_a_destra);
     remove_empty_strings(&codeblocks);
     num_open_braces = 0;
     for (size_t i = 0; i < codeblocks.size; i++) {
@@ -525,7 +527,8 @@ int main(int argc, const char *argv[]) {
   remove_empty_strings(&codeblocks);
 
   for (size_t i = 0; i < codeblocks.size; i++) {
-    printf("%7zu : %s\n", i, c_str(at(&codeblocks, i)));
+    // printf("%7zu : %s\n", i, c_str(at(&codeblocks, i)));
+    printf("%s\n", c_str(at(&codeblocks, i)));
   }
 
   fclose(f);
