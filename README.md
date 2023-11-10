@@ -7,14 +7,14 @@ Haskellinator trasforma codice (attualmente solo c) in haskell-style.
 
 Prima
 
-    while(cond) {
+    while(x == y) {
         func1();
         func2();
     }
 
 Dopo
 
-    while(cond)
+    while(x == y)
         { func1()
         ; func2()
         ;
@@ -22,10 +22,10 @@ Dopo
 
 --pesato-a-destra
 
-    while(cond) { func1()
-                ; func2()
-                ;
-                }
+    while(x == y) { func1()
+                  ; func2()
+                  ;
+                  }
 
 ## Compilazione
 
