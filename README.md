@@ -36,6 +36,6 @@ Dopo
 
 ## Come usare
 
-    ./haskellinator <FILE>
+    ./haskellinator <FILE> [--pesato-a-destra]
 
-l'output verra stampato sul terminale in stdout
+l'output viene stampato su stdout.
