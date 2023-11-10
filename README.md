@@ -20,6 +20,12 @@ Dopo
         ;
         }
 
+--pesato-a-destra
+
+    while(cond) { func1()
+                ; func2()
+                ;
+                }
 
 ## Compilazione
 
