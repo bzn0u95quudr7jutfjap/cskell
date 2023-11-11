@@ -3,7 +3,8 @@
 ## Descrizione　「記述」
 
 Haskellinator trasforma codice (attualmente solo c) in haskell-style.
-注意：日本語できません、本当にごめんなさい。
+
+注意：日本語できません、本当にごめんなさい。  
 ハスケリナターはハスケルスタイルに入力コード（Cだけ）を変える。
 
 
@@ -40,5 +41,7 @@ Dopo　「後」
 
     ./haskellinator <FILE「ファイル」> [--pesato-a-destra]
 
+
 l'output viene stampato su stdout.
+
 STDOUTに出力を書く。
