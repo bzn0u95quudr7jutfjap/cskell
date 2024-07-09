@@ -1,5 +1,5 @@
-#include "../src/stack_string.h"
-#include "../src/string_class.h"
+#include <stack_string.h>
+#include <string_class.h>
 #include <stdbool.h>
 #include <stdio.h>
 
