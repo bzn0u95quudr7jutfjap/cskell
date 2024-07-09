@@ -17,8 +17,8 @@ int test_tokenization(char *name, Stack_String (*function)(String *), String *in
   return errcode;
 }
 
-#define test_tokenization(name, function, string, stack)                                                               \
-  char *name##_argv[] = stack;                                                                                         \
+#define test_tokenization(name, function, string, ...)                                                                 \
+  char *name##_argv[] = {__VA_ARGS__};                                                                                 \
   String name##_string = from_cstr(string);                                                                            \
   Stack_String name##_stack = NewStack_String;                                                                         \
   for (int i = 0; i < (sizeof(name##_argv) / sizeof(name##_argv[0])); i++) {                                           \
@@ -29,9 +29,12 @@ int test_tokenization(char *name, Stack_String (*function)(String *), String *in
 Stack_String id(String *a) { return NewStack_String; };
 
 int main(int argc, char *argv[]) {
-  test_tokenization(token_prova, id, "", {});
-  test_tokenization(token_commenti, id, "", {});
-  test_tokenization(token_stringhe, id, "", {});
-  test_tokenization(token_funzione, id, "", {});
+  test_tokenization(token_prova, id, "");
+  test_tokenization(token_variable, id, "int a = 12;", "int", "a", "=", "12", ";");
+  test_tokenization(token_commenti, id, "int a; // int a = 12;\nint b;", "int", "a", ";", "// int a = 12;", "int", "b",
+                    ";");
+  test_tokenization(token_stringhe, id, "char * a = \"int o a = 12 ;\";", "char", "*", "a", "=", "\"int o a = 12 ;\"",
+                    ";");
+  test_tokenization(token_funzione, id, "");
   return 0;
 }
