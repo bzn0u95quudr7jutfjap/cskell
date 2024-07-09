@@ -35,13 +35,13 @@ Dopo　「後」
 ### CMake
 
 ```sh
-    mkdir build/ && cmake .. && make
+mkdir build/ && cmake .. && make
 ```
 
 ## Come usare　「使い方」
 
 ```sh
-    ./haskellinator <FILE「ファイル」> [--pesato-a-destra]
+./haskellinator <FILE「ファイル」> [--pesato-a-destra]
 ```
 
 l'output viene stampato su stdout.
