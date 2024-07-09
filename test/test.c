@@ -2,7 +2,6 @@
 #include "../src/string_class.h"
 #include <stdbool.h>
 #include <stdio.h>
-#include <string.h>
 
 void assertTrue(char *name, bool b) { printf("Testing :: [%3s] : %s\n", b ? "OK" : "ERR", name); }
 
@@ -16,25 +15,6 @@ int test_tokenization(char *name, Stack_String (*function)(String *), String *in
   }
   assertTrue(name, errcode == 0);
   return errcode;
-}
-
-String *new_string(char *src) {
-  String i = from_cstr(src);
-
-  String *s = malloc(sizeof(*s));
-  memcpy(&s, &i, sizeof(void *));
-  return s;
-}
-
-Stack_String *new_stack_string(int argc, char *argv[]) {
-  Stack_String ss = NewStack_String;
-  for (int i = 0; i < argc; i++) {
-    push(&ss, from_cstr(argv[i]));
-  }
-
-  Stack_String *s = malloc(sizeof(*s));
-  memcpy(&s, &ss, sizeof(void *));
-  return s;
 }
 
 #define test_tokenization(name, function, string, stack)                                                               \
