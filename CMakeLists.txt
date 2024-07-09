@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(haskellinator)
 
+include_directories(inc/)
+
 set(C_SOURCES 
   src/main.c
   src/string_class.c
