@@ -20,7 +20,7 @@ String *s_c(char *str) {
   return &s;
 }
 
-Stack_String *ss_ca(int argc, char *argv[]) {
+Stack_String *ss_ca(int argc, char **argv) {
   static Stack_String ss;
   Stack_String_free(&ss);
   Stack_String ss1 = NewStack_String;
