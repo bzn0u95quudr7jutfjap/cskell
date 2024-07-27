@@ -90,6 +90,21 @@ Stack_String tokenizer(String *stream) {
         push(token, c);
       }
       sseekcur(-1);
+    } else if (is_string_delimiter(c)) {
+      char delimiter = c;
+      String *token = pushNewString(tokens);
+      push(token, sgetc(stream));
+      while ((c = sgetc(stream)) != EOF && c != delimiter && c != '\n') {
+        push(token, c);
+        if (c == '\\') {
+          push(token, sgetc(stream));
+        }
+      }
+      if (c == delimiter) {
+        push(token, c);
+      } else {
+        sseekcur(-1);
+      }
     } else {
       sgetc(stream);
     }
