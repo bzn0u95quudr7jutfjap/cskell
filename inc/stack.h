@@ -17,6 +17,7 @@
   void STACK##_push(STACK *, T);                                                                                       \
   void STACK##_pop(STACK *);                                                                                           \
   T *STACK##_at(STACK *, size_t);                                                                                      \
+  void STACK##_free(STACK *stack);                                                                                     \
   extern const STACK New##STACK;
 
 #define DEFINE_STACK(T, STACK)                                                                                         \

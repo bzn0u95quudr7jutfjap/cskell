@@ -4,143 +4,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <token.h>
 #include <stack.h>
 #include <stack_string.h>
 #include <string_class.h>
-
-char fpeekc(FILE *stream) {
-  char c = fgetc(stream);
-  fseek(stream, -1, SEEK_CUR);
-  return c;
-}
 
 void print_indentation(int level) {
   for (int i = 0; i < level; i++) {
     fprintf(stdout, "  ");
   }
-}
-
-bool is_any_of(char c, size_t size, const char cs[]) {
-  for (size_t i = 0; i < size; i++) {
-    if (c == cs[i]) {
-      return true;
-    }
-  }
-  return false;
-}
-
-#define DEFINE_CSET(NAME, CSET)                                                                                        \
-  bool NAME(char c) {                                                                                                  \
-    static const char *const charset = CSET;                                                                           \
-    return is_any_of(c, strlen(charset), charset);                                                                     \
-  }
-
-DEFINE_CSET(is_white, " \n\t")
-DEFINE_CSET(is_special, "{}()[]#.;,")
-DEFINE_CSET(is_string_delimiter, "'\"")
-DEFINE_CSET(is_operator, "+-*/%!=&|^><")
-
-Stack_String parse_code_into_words(FILE *stream) {
-  size_t pos = ftell(stream);
-  fseek(stream, 0, SEEK_SET);
-
-  Stack_String code = NewStack_String;
-  push(&code, NewString);
-  char c;
-  while ((c = fgetc(stream)) != EOF) {
-    if (c == '#') {
-      push(&code, NewString);
-      String *line = &(code.data[code.size - 1]);
-      push(line, c);
-      while ((c = fgetc(stream)) != EOF) {
-        if (c == '\n' && *at(line, -1) != '\\') {
-          break;
-        }
-        push(line, c);
-      }
-      continue;
-    }
-
-    // commenti
-    if (c == '/' && fpeekc(stream) == '/') {
-      push(&code, NewString);
-      String *line = &(code.data[code.size - 1]);
-      push(line, c);
-      while ((c = fgetc(stream)) != EOF && c != '\n') {
-        push(line, c);
-      }
-      push(&code, NewString);
-      continue;
-    }
-
-    /* TODO TESTING
-     * del COMMENTO multilinea
-     */
-    // commenti multilinea
-    if (c == '/' && fpeekc(stream) == '*') {
-      push(&code, NewString);
-      String *line = &(code.data[code.size - 1]);
-      push(line, c);
-      while ((c = fgetc(stream)) != EOF && !(c == '*' && fpeekc(stream) == '/')) {
-        push(line, c);
-      }
-      push(line, c);
-      push(line, fgetc(stream));
-      push(&code, NewString);
-      continue;
-    }
-
-    if (is_string_delimiter(c)) {
-      char delimiter = c;
-      String str = NewString;
-      push(&str, delimiter);
-      while ((c = fgetc(stream)) != EOF && c != delimiter) {
-        if (c == '\\') {
-          push(&str, c);
-          push(&str, fgetc(stream));
-        } else {
-          push(&str, c);
-        }
-      }
-      push(&str, delimiter);
-      push(&code, str);
-      push(&code, NewString);
-      continue;
-    }
-
-    if (is_white(c)) {
-      push(&code, NewString);
-      continue;
-    }
-
-    if (is_special(c)) {
-      push(&code, NewString);
-      String *line = &(code.data[code.size - 1]);
-      push(line, c);
-      push(&code, NewString);
-      continue;
-    }
-
-    if (is_operator(c)) {
-      push(&code, NewString);
-      String *line = &(code.data[code.size - 1]);
-      push(line, c);
-      if (is_operator(fpeekc(stream))) {
-        push(line, fgetc(stream));
-      }
-      push(&code, NewString);
-      continue;
-    }
-
-    if (true) {
-      String *line = &(code.data[code.size - 1]);
-      push(line, c);
-      continue;
-    }
-  }
-
-  fseek(stream, pos, SEEK_SET);
-  return code;
 }
 
 void remove_empty_strings(Stack_String *stack) {

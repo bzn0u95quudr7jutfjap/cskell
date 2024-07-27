@@ -44,3 +44,13 @@ void move_into(String *dst, String *src) {
   }
   String_delete(src);
 }
+
+void String_free(String *stack) {
+  if (stack == NULL) {
+    return;
+  }
+  stack->capacity = 0;
+  stack->size = 0;
+  free(stack->data);
+  stack->data = NULL;
+}
