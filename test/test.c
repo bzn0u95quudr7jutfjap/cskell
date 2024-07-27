@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
   }
   printf("\n");
   {
-    char *a = "char * a = \"char * a =\\\"12\\\" ;\";";
+    char *a = "char * a = \"char * a = \\\"12\\\" ;\";";
     char *o[] = {"char", "*", "a", "=", "\"char * a = \\\"12\\\" ;\"", ";"};
     test_tokenization(token_stringhe_escape, tokenizer, a, o);
   }
