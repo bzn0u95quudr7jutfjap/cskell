@@ -1,18 +1,21 @@
-# Haskellinator
+# Haskellinator　「ハスケリナター」
 
-## Descrizione
+## Descrizione　「記述」
 
 Haskellinator trasforma codice (attualmente solo c) in haskell-style.
 
+注意：日本語できません、本当にごめんなさい。  
+ハスケリナターはハスケルスタイルに入力コード（Cだけ）を変える。
 
-Prima
+
+Prima　「以前」
 
     while(x == y) {
         func1();
         func2();
     }
 
-Dopo
+Dopo　「後」
 
     while(x == y)
         { func1()
@@ -27,15 +30,20 @@ Dopo
                   ;
                   }
 
-## Compilazione
+## Compilazione　「処理」
 
 ### CMake
 
-    cmake .
-    make
+```sh
+mkdir build/ && cmake .. && make
+```
 
-## Come usare
+## Come usare　「使い方」
 
-    ./haskellinator <FILE> [--pesato-a-destra]
+```sh
+./haskellinator <FILE「ファイル」> [--pesato-a-destra]
+```
 
 l'output viene stampato su stdout.
+
+STDOUTに出力を書く。

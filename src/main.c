@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "stack.h"
-#include "stack_string.h"
-#include "string_class.h"
+#include <stack.h>
+#include <stack_string.h>
+#include <string_class.h>
 
 char fpeekc(FILE *stream) {
   char c = fgetc(stream);
