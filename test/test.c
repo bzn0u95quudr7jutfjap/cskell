@@ -162,5 +162,29 @@ int main(int argc, char *argv[]) {
     test_tokenization(token_stringhe, tokenizer, a, o);
   }
   printf("\n");
+  {
+    char *a = "char * a = \"int o a = 12 ;\nint b = 11;";
+    char *o[] = {"char", "*", "a", "=", "\"int o a = 12 ;", "int", "b", "=", "11", ";"};
+    test_tokenization(token_stringhe_incomplete, tokenizer, a, o);
+  }
+  printf("\n");
+  {
+    char *a = "char * a = \"char * a =\\\"12\\\" ;\";";
+    char *o[] = {"char", "*", "a", "=", "\"char * a = \\\"12\\\" ;\"", ";"};
+    test_tokenization(token_stringhe_escape, tokenizer, a, o);
+  }
+  printf("\n");
+  {
+    char *a = "char a = 'a';";
+    char *o[] = {"char", "*", "a", "=", "'a'", ";"};
+    test_tokenization(token_char, tokenizer, a, o);
+  }
+  printf("\n");
+  {
+    char *a = "char a = '\\'';";
+    char *o[] = {"char", "*", "a", "=", "'\\''", ";"};
+    test_tokenization(token_char_escape, tokenizer, a, o);
+  }
+  printf("\n");
   return 0;
 }
