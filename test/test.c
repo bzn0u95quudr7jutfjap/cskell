@@ -176,13 +176,13 @@ int main(int argc, char *argv[]) {
   printf("\n");
   {
     char *a = "char a = 'a';";
-    char *o[] = {"char", "*", "a", "=", "'a'", ";"};
+    char *o[] = {"char", "a", "=", "'a'", ";"};
     test_tokenization(token_char, tokenizer, a, o);
   }
   printf("\n");
   {
     char *a = "char a = '\\'';";
-    char *o[] = {"char", "*", "a", "=", "'\\''", ";"};
+    char *o[] = {"char", "a", "=", "'\\''", ";"};
     test_tokenization(token_char_escape, tokenizer, a, o);
   }
   printf("\n");
