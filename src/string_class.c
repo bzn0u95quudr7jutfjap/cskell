@@ -3,14 +3,14 @@
 #include <stdio.h>
 #include <string.h>
 
-DEFINE_STACK(char, String);
+define_template_stack_type(char, String);
 
 char *c_str(String *str) {
   if (str == NULL) {
     return NULL;
   }
-  push(str, '\0');
-  pop(str);
+  push_String(str, '\0');
+  pop_String(str);
   return str->data;
 }
 
@@ -19,9 +19,9 @@ bool equals(String *a, String *b) {
 }
 
 String from_cstr(char *str) {
-  String tmp = NewString;
+  String tmp = new_String();
   for (size_t i = 0; str[i]; i++) {
-    push(&tmp, str[i]);
+    push_String(&tmp, str[i]);
   }
   return tmp;
 }
@@ -40,12 +40,12 @@ void move_into(String *dst, String *src) {
     return;
   }
   for (size_t i = 0; i < src->size; i++) {
-    push(dst, src->data[i]);
+    push_String(dst, src->data[i]);
   }
   String_delete(src);
 }
 
-void String_free(String *stack) {
+void free_String(String *stack) {
   if (stack == NULL) {
     return;
   }

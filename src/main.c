@@ -4,10 +4,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <token.h>
 #include <stack.h>
 #include <stack_string.h>
 #include <string_class.h>
+#include <token.h>
+
+#if 1
+
+int main(int argc, char *argv[]) { return 0; }
+
+#else
 
 void print_indentation(int level) {
   for (int i = 0; i < level; i++) {
@@ -419,3 +425,5 @@ int main(int argc, const char *argv[]) {
 
   return 0;
 }
+
+#endif

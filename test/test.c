@@ -8,13 +8,13 @@
 char *status(int e) { return e ? "OK" : "ERR"; }
 #define foreach(array, iter, body)                                                                                     \
   for (size_t _i = 0; _i < array->size; _i++) {                                                                        \
-    typeof(at(array, _i)) iter = at(array, _i);                                                                        \
+    typeof(at_Stack_String(array, _i)) iter = at_Stack_String(array, _i);                                              \
     body                                                                                                               \
   }
 
 String *s_c(char *str) {
   static String s;
-  String_free(&s);
+  free_String(&s);
   String s1 = from_cstr(str);
   memcpy(&s, &s1, sizeof(s1));
   return &s;
@@ -22,10 +22,10 @@ String *s_c(char *str) {
 
 Stack_String *ss_ca(int argc, char **argv) {
   static Stack_String ss;
-  Stack_String_free(&ss);
-  Stack_String ss1 = NewStack_String;
+  free_Stack_String(&ss);
+  Stack_String ss1 = new_Stack_String();
   for (int i = 0; i < argc; i++) {
-    push(&ss1, from_cstr(argv[i]));
+    push_Stack_String(&ss1, from_cstr(argv[i]));
   }
   memcpy(&ss, &ss1, sizeof(ss1));
   return &ss;
@@ -47,16 +47,16 @@ int test_tokenization(char *name, Stack_String (*function)(String *), String *in
   foreach ((&a), i, { printf("{%s}", c_str(i)); })
     printf("\n");
   printf("%6s :: %s\n", "FINE", name);
-  String_free(input);
-  Stack_String_free(output);
-  Stack_String_free(&a);
+  free_String(input);
+  free_Stack_String(output);
+  free_Stack_String(&a);
   return errcode;
 }
 
 #define test_tokenization(name, function, string, argv)                                                                \
   test_tokenization(#name, function, s_c(string), ss_ca(sizeof(argv) / sizeof(argv[0]), argv))
 
-Stack_String id(String *a) { return NewStack_String; };
+Stack_String id(String *a) { return new_Stack_String(); };
 
 int main(int argc, char *argv[]) {
   printf("\n");

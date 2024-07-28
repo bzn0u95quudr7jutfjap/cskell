@@ -4,6 +4,6 @@
 #ifndef STACK_STRING
 #define STACK_STRING
 
-DECLARE_STACK(String, Stack_String);
+declare_template_stack_type(String, Stack_String);
 
 #endif 
