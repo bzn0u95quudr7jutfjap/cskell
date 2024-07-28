@@ -20,7 +20,7 @@ String *s_c(char *str) {
   return &s;
 }
 
-Stack_String *ss_ca(int argc, char *argv[]) {
+Stack_String *ss_ca(int argc, char **argv) {
   static Stack_String ss;
   Stack_String_free(&ss);
   Stack_String ss1 = NewStack_String;
@@ -151,15 +151,39 @@ int main(int argc, char *argv[]) {
   }
   printf("\n");
   {
-    char *a = "int a; // int a = 12;\nint b;";
-    char *o[] = {"int", "a", ";", "// int a = 12;", "int", "b", ";"};
-    test_tokenization(token_commenti, tokenizer, a, o);
-  }
-  printf("\n");
-  {
     char *a = "char * a = \"int o a = 12 ;\";";
     char *o[] = {"char", "*", "a", "=", "\"int o a = 12 ;\"", ";"};
     test_tokenization(token_stringhe, tokenizer, a, o);
+  }
+  printf("\n");
+  {
+    char *a = "char * a = \"int o a = 12 ;\nint b = 11;";
+    char *o[] = {"char", "*", "a", "=", "\"int o a = 12 ;", "int", "b", "=", "11", ";"};
+    test_tokenization(token_stringhe_incomplete, tokenizer, a, o);
+  }
+  printf("\n");
+  {
+    char *a = "char * a = \"char * a = \\\"12\\\" ;\";";
+    char *o[] = {"char", "*", "a", "=", "\"char * a = \\\"12\\\" ;\"", ";"};
+    test_tokenization(token_stringhe_escape, tokenizer, a, o);
+  }
+  printf("\n");
+  {
+    char *a = "char a = 'a';";
+    char *o[] = {"char", "a", "=", "'a'", ";"};
+    test_tokenization(token_char, tokenizer, a, o);
+  }
+  printf("\n");
+  {
+    char *a = "char a = '\\'';";
+    char *o[] = {"char", "a", "=", "'\\''", ";"};
+    test_tokenization(token_char_escape, tokenizer, a, o);
+  }
+  printf("\n");
+  {
+    char *a = "int a; // int a = 12;\nint b;";
+    char *o[] = {"int", "a", ";", "// int a = 12;", "int", "b", ";"};
+    test_tokenization(token_commenti, tokenizer, a, o);
   }
   printf("\n");
   return 0;
