@@ -5,7 +5,6 @@
 #include <stdio.h>
 
 #include <stack.h>
-#include <stack_string.h>
 #include <string_class.h>
 
 char fpeekc(FILE *stream);

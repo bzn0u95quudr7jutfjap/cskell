@@ -1,4 +1,3 @@
-#include <stack_string.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -183,8 +182,27 @@ int main(int argc, char *argv[]) {
   {
     char *a = "int a; // int a = 12;\nint b;";
     char *o[] = {"int", "a", ";", "// int a = 12;", "int", "b", ";"};
-    test_tokenization(token_commenti, tokenizer, a, o);
+    test_tokenization(token_commenti_monolinea, tokenizer, a, o);
   }
+  printf("\n");
+  {
+    char *a = "int a; // int a = 12;";
+    char *o[] = {"int", "a", ";", "// int a = 12;"};
+    test_tokenization(token_commenti_monolinea_senza_newline, tokenizer, a, o);
+  }
+  printf("\n");
+  {
+    char *a = "int a; /* int a = 12;\nint b;*/ int c;";
+    char *o[] = {"int", "a", ";", "/* int a = 12;\nint b;*/", "int", "c", ";"};
+    test_tokenization(token_commenti_multilinea, tokenizer, a, o);
+  }
+  printf("\n");
+  {
+    char *a = "int a; /* int a = 12;\nint b;";
+    char *o[] = {"int", "a", ";", "/* int a = 12;\nint b;"};
+    test_tokenization(token_commenti_multilinea_senza_terminatore, tokenizer, a, o);
+  }
+  // test per le macro
   printf("\n");
   return 0;
 }

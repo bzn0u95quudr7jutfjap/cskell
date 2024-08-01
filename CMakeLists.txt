@@ -5,7 +5,6 @@ include_directories(inc/)
 
 set(C_SOURCES 
   src/string_class.c
-  src/stack_string.c
   src/token.c
 )
 

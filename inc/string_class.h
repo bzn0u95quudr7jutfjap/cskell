@@ -5,6 +5,7 @@
 #define STRING
 
 declare_template_stack_type(char, String);
+declare_template_stack_type(String, Stack_String);
 
 char *c_str(String *str);
 bool equals(String *a, String *b);

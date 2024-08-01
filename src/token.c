@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include <stack.h>
-#include <stack_string.h>
 #include <string_class.h>
 #include <token.h>
 
@@ -75,6 +74,22 @@ Stack_String tokenizer(String *stream) {
     } else if (is_special(c)) {
       String *token = pushNewString(tokens);
       push_String(token, sgetc(stream));
+    } else if (c == '/' && speekoffset(stream, 1) == '/') {
+      String *token = pushNewString(tokens);
+      push_String(token, sgetc(stream));
+      while ((c = sgetc(stream)) != '\n' && c != EOF) {
+        push_String(token, c);
+      }
+    } else if (c == '/' && speekoffset(stream, 1) == '*') {
+      String *token = pushNewString(tokens);
+      push_String(token, sgetc(stream));
+      while ((c = sgetc(stream)) != EOF && !(c == '*' && speekc(stream) == '/')) {
+        push_String(token, c);
+      }
+      if (c != EOF) {
+        push_String(token, c);
+        push_String(token, sgetc(stream));
+      }
     } else if (is_operator(c)) {
       String *token = pushNewString(tokens);
       push_String(token, sgetc(stream));

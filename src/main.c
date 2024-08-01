@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include <stack.h>
-#include <stack_string.h>
 #include <string_class.h>
 #include <token.h>
 
