@@ -2,9 +2,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <int.h>
+#include <stdlib.h>
 
-define_template_stack_type(char, String);
-define_template_stack_type(String, Stack_String);
+define_template_stack_c(char, String);
+define_template_stack_c(String, Stack_String);
 
 void free_Stack_String(Stack_String *stack) {
   if (stack == NULL) {
@@ -28,7 +30,7 @@ char *c_str(String *str) {
   return str->data;
 }
 
-bool equals(String *a, String *b) {
+u8 equals_string(String *a, String *b) {
   return a != NULL && b != NULL && ((a == b) || ((a->size == b->size) && strcmp(c_str(a), c_str(b)) == 0));
 }
 

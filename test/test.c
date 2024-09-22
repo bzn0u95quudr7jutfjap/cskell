@@ -1,208 +1,96 @@
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
-#include <string_class.h>
-#include <token.h>
+#include "test.h"
+#include "string_class.h"
+#include <stdlib.h>
 
-char *status(int e) { return e ? "OK" : "ERR"; }
-#define foreach(array, iter, body)                                                                                     \
-  for (size_t _i = 0; _i < array->size; _i++) {                                                                        \
-    typeof(at_Stack_String(array, _i)) iter = at_Stack_String(array, _i);                                              \
-    body                                                                                                               \
+u0 exec_test(testdata *t) { t->vtable.exec(t); }
+u0 print_test(testdata *t) { t->vtable.print(t); }
+u0 free_test(testdata *t) { t->vtable.free(t); }
+
+u8 success(testdata *t) { return t->code == 0; }
+char *status(testdata *t) { return success(t) ? "OK" : "ERR"; }
+
+define_test(
+    test_tokenizer,
+    {
+      t->tokenizer.output = t->tokenizer.function(&t->tokenizer.input);
+      t->code = equals_stack_string(&t->tokenizer.output, &t->tokenizer.expect) ? 0 : 1;
+    },
+    {
+      printf("%6s :: %s\n", "INIZIO", t->name);
+      printf("%6s :: [%3s] :: %10s :: ", "STATUS", status(t), "Atteso");
+      print_stack_string(&t->tokenizer.output);
+      printf("\n");
+      printf("%6s :: [%3s] :: %10s :: ", "STATUS", status(t), "Ottenuto");
+      print_stack_string(&t->tokenizer.expect);
+      printf("\n");
+      printf("%6s :: %s\n", "FINE", t->name);
+    },
+    {
+      free_String(&t->tokenizer.input);
+      free_Stack_String(&t->tokenizer.output);
+      free_Stack_String(&t->tokenizer.expect);
+    });
+
+u0 resize_string(String *s, u32 cap) { s->data = realloc(s->data, s->capacity = cap); }
+
+u0 print_string(String *s) {
+  String buffer = new_String();
+  resize_string(&buffer, s->size * 2);
+  for (u32 i = 0; i < s->size; i++) {
+    char c = *at_String(s, i);
+    if (32 < c && c < 127) {
+      push_String(&buffer, c);
+    } else {
+      u8 g = c;
+      switch (g) {
+      case ' ':
+        push_String(&buffer, g);
+        break;
+      case '\t':
+        push_String(&buffer, '\\');
+        push_String(&buffer, 't');
+        break;
+      case '\n':
+        push_String(&buffer, '\\');
+        push_String(&buffer, 'n');
+        break;
+      case '\r':
+        push_String(&buffer, '\\');
+        push_String(&buffer, 'r');
+        break;
+      default:
+        push_String(&buffer, '\\');
+        push_String(&buffer, 'x');
+        push_String(&buffer, '0' + (g / 16));
+        push_String(&buffer, '0' + (g % 16));
+        break;
+      };
+    }
   }
-
-String *s_c(char *str) {
-  static String s;
-  free_String(&s);
-  String s1 = from_cstr(str);
-  memcpy(&s, &s1, sizeof(s1));
-  return &s;
+  printf("{%s}", c_str(&buffer));
+  free_String(&buffer);
 }
 
-Stack_String *ss_ca(int argc, char **argv) {
-  static Stack_String ss;
-  free_Stack_String(&ss);
-  Stack_String ss1 = new_Stack_String();
-  for (int i = 0; i < argc; i++) {
-    push_Stack_String(&ss1, from_cstr(argv[i]));
+u0 print_stack_string(Stack_String *output) {
+  for (u32 i = 0; i < output->size; i++) {
+    print_string(at(output, i));
   }
-  memcpy(&ss, &ss1, sizeof(ss1));
-  return &ss;
 }
 
-int test_tokenization(char *name, Stack_String (*function)(String *), String *input, Stack_String *output) {
-  printf("%6s :: %s\n", "INIZIO", name);
-  Stack_String a = function(input);
-  bool errcode = 0;
-  int min = 0;
-  errcode += (a.size == output->size) != true;
-  for (int i = 0; i < a.size && i < output->size; i++) {
-    errcode += !equals(&(a.data[i]), &(output->data[i]));
+u8 equals_stack_string(Stack_String *a, Stack_String *b) {
+  if (a == b) {
+    return 1;
   }
-  printf("%6s :: [%3s] :: %10s :: ", "STATUS", status(errcode == 0), "Atteso");
-  foreach (output, i, { printf("{%s}", c_str(i)); })
-    printf("\n");
-  printf("%6s :: [%3s] :: %10s :: ", "STATUS", status(errcode == 0), "Ottenuto");
-  foreach ((&a), i, { printf("{%s}", c_str(i)); })
-    printf("\n");
-  printf("%6s :: %s\n", "FINE", name);
-  free_String(input);
-  free_Stack_String(output);
-  free_Stack_String(&a);
-  return errcode;
-}
-
-#define test_tokenization(name, function, string, argv)                                                                \
-  test_tokenization(#name, function, s_c(string), ss_ca(sizeof(argv) / sizeof(argv[0]), argv))
-
-Stack_String id(String *a) { return new_Stack_String(); };
-
-int main(int argc, char *argv[]) {
-  printf("\n");
-  {
-    char *a = "";
-    char *o[] = {};
-    test_tokenization(token_prova, tokenizer, a, o);
+  if (a == NULL || b == NULL) {
+    return 0;
   }
-  printf("\n");
-  {
-    char *a = "int _a1_bc3;";
-    char *o[] = {"int", "_a1_bc3", ";"};
-    test_tokenization(token_variabile_strana, tokenizer, a, o);
+  if (a->size != b->size) {
+    return 0;
   }
-  printf("\n");
-  {
-    char *a = "_uint32_t a;";
-    char *o[] = {"_uint32_t", "a", ";"};
-    test_tokenization(token_tipo_strano, tokenizer, a, o);
+  for (u32 i = 0; i < a->size; i++) {
+    if (!equals_string(at(a, i), at(b, i))) {
+      return 0;
+    }
   }
-  printf("\n");
-  {
-    char *a = "_uint32_t _a1_bc3;";
-    char *o[] = {"_uint32_t", "_a1_bc3", ";"};
-    test_tokenization(token_variabile_strana_tipo_strano, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "int a = 12;";
-    char *o[] = {"int", "a", "=", "12", ";"};
-    test_tokenization(token_variabile, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "int a = 0b010;";
-    char *o[] = {"int", "a", "=", "0b010", ";"};
-    test_tokenization(token_variabile_binary, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "int a = 010;";
-    char *o[] = {"int", "a", "=", "010", ";"};
-    test_tokenization(token_variabile_octal, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "int a = 0xdeadBeef;";
-    char *o[] = {"int", "a", "=", "0xdeadBeef", ";"};
-    test_tokenization(token_variabile_hex, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "int a = -12;";
-    char *o[] = {"int", "a", "=", "-", "12", ";"};
-    test_tokenization(token_variabile_negative, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "long a = 01L;";
-    char *o[] = {"long", "a", "=", "01L", ";"};
-    test_tokenization(token_variabile_long, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "double a = 12.34;";
-    char *o[] = {"double", "a", "=", "12", ".", "34", ";"};
-    test_tokenization(token_variabile_double, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "float a = 12.34f;";
-    char *o[] = {"float", "a", "=", "12", ".", "34f", ";"};
-    test_tokenization(token_variabile_float, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "float a = .34f;";
-    char *o[] = {"float", "a", "=", ".", "34f", ";"};
-    test_tokenization(token_variabile_float_dot, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "float a = -.34f;";
-    char *o[] = {"float", "a", "=", "-", ".", "34f", ";"};
-    test_tokenization(token_variabile_float_dot_negative, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "int a = 0; a += 1; a = a >= 0;";
-    char *o[] = {"int", "a", "=", "0", ";", "a", "+=", "1", ";", "a", "=", "a", ">=", "0", ";"};
-    test_tokenization(token_operatori_doppi, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "char * a = \"int o a = 12 ;\";";
-    char *o[] = {"char", "*", "a", "=", "\"int o a = 12 ;\"", ";"};
-    test_tokenization(token_stringhe, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "char * a = \"int o a = 12 ;\nint b = 11;";
-    char *o[] = {"char", "*", "a", "=", "\"int o a = 12 ;", "int", "b", "=", "11", ";"};
-    test_tokenization(token_stringhe_incomplete, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "char * a = \"char * a = \\\"12\\\" ;\";";
-    char *o[] = {"char", "*", "a", "=", "\"char * a = \\\"12\\\" ;\"", ";"};
-    test_tokenization(token_stringhe_escape, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "char a = 'a';";
-    char *o[] = {"char", "a", "=", "'a'", ";"};
-    test_tokenization(token_char, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "char a = '\\'';";
-    char *o[] = {"char", "a", "=", "'\\''", ";"};
-    test_tokenization(token_char_escape, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "int a; // int a = 12;\nint b;";
-    char *o[] = {"int", "a", ";", "// int a = 12;", "int", "b", ";"};
-    test_tokenization(token_commenti_monolinea, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "int a; // int a = 12;";
-    char *o[] = {"int", "a", ";", "// int a = 12;"};
-    test_tokenization(token_commenti_monolinea_senza_newline, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "int a; /* int a = 12;\nint b;*/ int c;";
-    char *o[] = {"int", "a", ";", "/* int a = 12;\nint b;*/", "int", "c", ";"};
-    test_tokenization(token_commenti_multilinea, tokenizer, a, o);
-  }
-  printf("\n");
-  {
-    char *a = "int a; /* int a = 12;\nint b;";
-    char *o[] = {"int", "a", ";", "/* int a = 12;\nint b;"};
-    test_tokenization(token_commenti_multilinea_senza_terminatore, tokenizer, a, o);
-  }
-  // test per le macro
-  printf("\n");
-  return 0;
+  return 1;
 }

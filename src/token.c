@@ -11,17 +11,17 @@ size_t string_index;
 void sseekres() { string_index = 0; }
 
 char sgetc(String *stream) {
-  char *c = at_String(stream, string_index++);
+  char *c = at(stream, string_index++);
   return c == NULL ? EOF : *c;
 }
 
 char speekc(String *stream) {
-  char *c = at_String(stream, string_index);
+  char *c = at(stream, string_index);
   return c == NULL ? EOF : *c;
 }
 
 char speekoffset(String *stream, int o) {
-  char *c = at_String(stream, string_index + o);
+  char *c = at(stream, string_index + o);
   return c == NULL ? EOF : *c;
 }
 
@@ -55,8 +55,8 @@ bool is_number1(char c) {
 }
 
 String *pushNewString(Stack_String *tokens) {
-  push_Stack_String(tokens, new_String());
-  return at_Stack_String(tokens, -1);
+  push(tokens, new_String());
+  return at(tokens, -1);
 }
 
 Stack_String tokenizer(String *stream) {
@@ -68,55 +68,55 @@ Stack_String tokenizer(String *stream) {
     if (is_name_first(c)) {
       String *token = pushNewString(tokens);
       while (is_name(c = sgetc(stream))) {
-        push_String(token, c);
+        push(token, c);
       }
       sseekcur(-1);
     } else if (is_special(c)) {
       String *token = pushNewString(tokens);
-      push_String(token, sgetc(stream));
+      push(token, sgetc(stream));
     } else if (c == '/' && speekoffset(stream, 1) == '/') {
       String *token = pushNewString(tokens);
-      push_String(token, sgetc(stream));
+      push(token, sgetc(stream));
       while ((c = sgetc(stream)) != '\n' && c != EOF) {
-        push_String(token, c);
+        push(token, c);
       }
     } else if (c == '/' && speekoffset(stream, 1) == '*') {
       String *token = pushNewString(tokens);
-      push_String(token, sgetc(stream));
+      push(token, sgetc(stream));
       while ((c = sgetc(stream)) != EOF && !(c == '*' && speekc(stream) == '/')) {
-        push_String(token, c);
+        push(token, c);
       }
       if (c != EOF) {
-        push_String(token, c);
-        push_String(token, sgetc(stream));
+        push(token, c);
+        push(token, sgetc(stream));
       }
     } else if (is_operator(c)) {
       String *token = pushNewString(tokens);
-      push_String(token, sgetc(stream));
+      push(token, sgetc(stream));
       if (is_operator(c = sgetc(stream))) {
-        push_String(token, c);
+        push(token, c);
       } else {
         sseekcur(-1);
       }
     } else if (is_number1(c)) {
       String *token = pushNewString(tokens);
-      push_String(token, sgetc(stream));
+      push(token, sgetc(stream));
       while (is_number1(c = sgetc(stream))) {
-        push_String(token, c);
+        push(token, c);
       }
       sseekcur(-1);
     } else if (is_string_delimiter(c)) {
       char delimiter = c;
       String *token = pushNewString(tokens);
-      push_String(token, sgetc(stream));
+      push(token, sgetc(stream));
       while ((c = sgetc(stream)) != EOF && c != delimiter && c != '\n') {
-        push_String(token, c);
+        push(token, c);
         if (c == '\\') {
-          push_String(token, sgetc(stream));
+          push(token, sgetc(stream));
         }
       }
       if (c == delimiter) {
-        push_String(token, c);
+        push(token, c);
       } else {
         sseekcur(-1);
       }
@@ -132,7 +132,7 @@ Stack_String parse_code_into_words(FILE *stream) {
   fseek(stream, 0, SEEK_SET);
   char c;
   while ((c = fgetc(stream)) != EOF) {
-    push_String(&s, c);
+    push(&s, c);
   }
   return tokenizer(&s);
 }
