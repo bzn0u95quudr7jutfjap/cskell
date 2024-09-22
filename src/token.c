@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <stack.h>
@@ -59,13 +60,40 @@ String *pushNewString(Stack_String *tokens) {
   return at(tokens, -1);
 }
 
+u8 is_macro(String *stream) { return 1; }
+
+String extract_macro(String *stream) {
+  String macro = new_String();
+  char c;
+  while ((c = sgetc(stream)) != EOF && !(c != '\\' && speekc(stream) == '\n')) {
+    push(&macro, c);
+  }
+  return macro;
+}
+
 Stack_String tokenizer(String *stream) {
   char c = EOF;
   Stack_String tokens_obj = new_Stack_String();
   Stack_String *tokens = &tokens_obj;
 
   for (sseekres(); (c = speekc(stream)) != EOF;) {
-    if (is_name_first(c)) {
+    if (c == '#' && is_macro(stream)) {
+      push(pushNewString(tokens), sgetc(stream));
+      if (speekc(stream) == '#') {
+        push(pushNewString(tokens), sgetc(stream));
+      } else {
+        String macro = extract_macro(stream);
+        u32 old = string_index;
+        Stack_String macro_tokens = tokenizer(&macro);
+        for (u32 i = 0; i < macro_tokens.size; i++) {
+          push(tokens, *at(&macro_tokens, i));
+        }
+        free_String(&macro);
+        free(macro_tokens.data);
+        push(tokens, from_cstr("\n"));
+        string_index = old;
+      }
+    } else if (is_name_first(c)) {
       String *token = pushNewString(tokens);
       while (is_name(c = sgetc(stream))) {
         push(token, c);
