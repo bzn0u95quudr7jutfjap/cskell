@@ -7,27 +7,6 @@
 #include <string_class.h>
 #include <token.h>
 
-size_t string_index;
-
-void sseekres() { string_index = 0; }
-
-char sgetc(String *stream) {
-  char *c = at(stream, string_index++);
-  return c == NULL ? EOF : *c;
-}
-
-char speekc(String *stream) {
-  char *c = at(stream, string_index);
-  return c == NULL ? EOF : *c;
-}
-
-char speekoffset(String *stream, int o) {
-  char *c = at(stream, string_index + o);
-  return c == NULL ? EOF : *c;
-}
-
-void sseekcur(int o) { string_index += o; }
-
 bool is_any_of(char c, size_t size, const char cs[]) {
   for (size_t i = 0; i < size; i++) {
     if (c == cs[i]) {
@@ -46,7 +25,7 @@ bool is_any_of(char c, size_t size, const char cs[]) {
 DEFINE_CSET(is_white, " \n\t")
 DEFINE_CSET(is_special, "{}()[]#.;,")
 DEFINE_CSET(is_string_delimiter, "'\"")
-DEFINE_CSET(is_operator, "+-*/%!=&|^><")
+DEFINE_CSET(is_operator, "+-*/%!=&|^><?:")
 
 bool is_name_first(char c) { return (c == '_') || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'); }
 bool is_name(char c) { return is_name_first(c) || ('0' <= c && c <= '9'); }
@@ -55,59 +34,78 @@ bool is_number1(char c) {
   return is_number1_first(c) || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F') || c == 'L' || c == 'x' || c == 'X';
 }
 
+typedef struct {
+  token_type type;
+  bool (*fn)(char c);
+} pair_token_type_function;
+
+token_type get_type_of_char(char c) {
+  static pair_token_type_function pairs[] = {
+      {.type = TOKEN_UNIDENTIFIED, .fn = is_white},      {.type = TOKEN_SPECIAL, .fn = is_special},
+      {.type = TOKEN_STRING, .fn = is_string_delimiter}, {.type = TOKEN_OPERATOR, .fn = is_operator},
+      {.type = TOKEN_IDENTIFIER, .fn = is_name_first},   {.type = TOKEN_NUMBER, .fn = is_number1_first},
+  };
+  static u32 len = (sizeof(pairs) / sizeof(*pairs));
+
+  for (u32 i = 0; i < len; i++) {
+    if (pairs[i].fn(c)) {
+      return pairs[i].type;
+    }
+  }
+  return pairs[0].type;
+}
+
 String *pushNewString(Stack_String *tokens) {
   push(tokens, new_String());
   return at(tokens, -1);
 }
 
-u8 is_macro(String *stream) { return 1; }
+Stack_Token g_tokens = {};
 
-String extract_macro(String *stream) {
-  String macro = new_String();
-  char c;
-  while ((c = sgetc(stream)) != EOF && !(c != '\\' && speekc(stream) == '\n')) {
-    push(&macro, c);
-  }
-  return macro;
-}
-
-Stack_String tokenizer(String *stream) {
+Stack_String tokenizer(String *stream_string) {
+  Iter_String stream_string_obj = sseekres(stream_string);
+  Iter_String *stream = &stream_string_obj;
+  u8 macro = 0;
   char c = EOF;
   Stack_String tokens_obj = new_Stack_String();
   Stack_String *tokens = &tokens_obj;
 
-  for (sseekres(); (c = speekc(stream)) != EOF;) {
-    if (c == '#' && is_macro(stream)) {
-      push(pushNewString(tokens), sgetc(stream));
-      if (speekc(stream) == '#') {
-        push(pushNewString(tokens), sgetc(stream));
-      } else {
-        String macro = extract_macro(stream);
-        u32 old = string_index;
-        Stack_String macro_tokens = tokenizer(&macro);
-        for (u32 i = 0; i < macro_tokens.size; i++) {
-          push(tokens, *at(&macro_tokens, i));
-        }
-        free_String(&macro);
-        free(macro_tokens.data);
-        push(tokens, from_cstr("\n"));
-        string_index = old;
+  free_Stack_Token(&g_tokens);
+
+  while ((c = speekc(stream)) != EOF) {
+    if (macro && c != '\\' && speekoffset(stream, 1) == '\n') {
+      macro = 0;
+      token_type t = get_type_of_char(c);
+      if (t != TOKEN_UNIDENTIFIED) {
+        push(pushNewString(tokens), c);
+        push(&g_tokens, (Token){.type = t});
       }
+      push(tokens, from_cstr("\n"));
+      sseekcur(stream, 2);
+      push(&g_tokens, (Token){.type = TOKEN_MACRO_END});
+    } else if (macro && c == '#') {
+      push(pushNewString(tokens), sgetc(stream));
+      push(&g_tokens, (Token){.type = TOKEN_MACRO_BEGIN});
+    } else if (c == '#') {
+      macro = 1;
     } else if (is_name_first(c)) {
       String *token = pushNewString(tokens);
       while (is_name(c = sgetc(stream))) {
         push(token, c);
       }
-      sseekcur(-1);
+      sseekcur(stream, -1);
+      push(&g_tokens, (Token){.type = TOKEN_IDENTIFIER});
     } else if (is_special(c)) {
       String *token = pushNewString(tokens);
       push(token, sgetc(stream));
+      push(&g_tokens, (Token){.type = TOKEN_SPECIAL});
     } else if (c == '/' && speekoffset(stream, 1) == '/') {
       String *token = pushNewString(tokens);
       push(token, sgetc(stream));
       while ((c = sgetc(stream)) != '\n' && c != EOF) {
         push(token, c);
       }
+      push(&g_tokens, (Token){.type = TOKEN_COMMENT_SL});
     } else if (c == '/' && speekoffset(stream, 1) == '*') {
       String *token = pushNewString(tokens);
       push(token, sgetc(stream));
@@ -118,21 +116,24 @@ Stack_String tokenizer(String *stream) {
         push(token, c);
         push(token, sgetc(stream));
       }
+      push(&g_tokens, (Token){.type = TOKEN_COMMENT_ML});
     } else if (is_operator(c)) {
       String *token = pushNewString(tokens);
       push(token, sgetc(stream));
       if (is_operator(c = sgetc(stream))) {
         push(token, c);
       } else {
-        sseekcur(-1);
+        sseekcur(stream, -1);
       }
+      push(&g_tokens, (Token){.type = TOKEN_OPERATOR});
     } else if (is_number1(c)) {
       String *token = pushNewString(tokens);
       push(token, sgetc(stream));
       while (is_number1(c = sgetc(stream))) {
         push(token, c);
       }
-      sseekcur(-1);
+      sseekcur(stream, -1);
+      push(&g_tokens, (Token){.type = TOKEN_NUMBER});
     } else if (is_string_delimiter(c)) {
       char delimiter = c;
       String *token = pushNewString(tokens);
@@ -146,11 +147,16 @@ Stack_String tokenizer(String *stream) {
       if (c == delimiter) {
         push(token, c);
       } else {
-        sseekcur(-1);
+        sseekcur(stream, -1);
       }
+      push(&g_tokens, (Token){.type = TOKEN_STRING});
     } else {
       sgetc(stream);
     }
+  }
+  if (macro) {
+    push(&tokens_obj, from_cstr("\n"));
+    push(&g_tokens, (Token){.type = TOKEN_MACRO_END});
   }
   return tokens_obj;
 }

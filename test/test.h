@@ -12,7 +12,7 @@ typedef struct {
   Stack_String (*function)(String *);
   String input;
   Stack_String output;
-  Stack_String expect;
+  Stack_String atteso;
 } test_tokenizer;
 
 typedef struct testdata testdata;
@@ -35,6 +35,8 @@ struct testdata {
 char *status(testdata *t);
 u8 success(testdata *t);
 
+u0 print_string(String *s);
+
 #define declare_test_function(type) extern testdata_vtable functions_##type
 
 #define define_test_function_internal(type, execname, execbody, printname, printbody, freename, freebody)              \
@@ -54,5 +56,8 @@ u0 print_test(testdata *t);
 u0 free_test(testdata *t);
 
 declare_test_function(test_tokenizer);
+
+String file_get_content(char *fn);
+char *type_string(token_type t);
 
 #endif

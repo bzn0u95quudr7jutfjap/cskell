@@ -10,6 +10,6 @@
 char fpeekc(FILE *stream);
 bool is_any_of(char c, size_t size, const char cs[]);
 Stack_String parse_code_into_words(FILE *stream);
-Stack_String tokenizer(String *);
+Stack_String tokenizer(String * stream);
 
 #endif // TOKEN

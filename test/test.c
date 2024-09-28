@@ -13,22 +13,22 @@ define_test(
     test_tokenizer,
     {
       t->tokenizer.output = t->tokenizer.function(&t->tokenizer.input);
-      t->code = equals_stack_string(&t->tokenizer.output, &t->tokenizer.expect) ? 0 : 1;
+      t->code = equals_stack_string(&t->tokenizer.output, &t->tokenizer.atteso) ? 0 : 1;
     },
     {
       printf("%6s :: %s\n", "INIZIO", t->name);
       printf("%6s :: [%3s] :: %10s :: ", "STATUS", status(t), "Atteso");
-      print_stack_string(&t->tokenizer.output);
+      print_stack_string(&t->tokenizer.atteso);
       printf("\n");
-      printf("%6s :: [%3s] :: %10s :: ", "STATUS", status(t), "Ottenuto");
-      print_stack_string(&t->tokenizer.expect);
+      printf("%6s :: [%3s] :: %10s :: ", "STATUS", status(t), "Output");
+      print_stack_string(&t->tokenizer.output);
       printf("\n");
       printf("%6s :: %s\n", "FINE", t->name);
     },
     {
       free_String(&t->tokenizer.input);
       free_Stack_String(&t->tokenizer.output);
-      free_Stack_String(&t->tokenizer.expect);
+      free_Stack_String(&t->tokenizer.atteso);
     });
 
 u0 resize_string(String *s, u32 cap) { s->data = realloc(s->data, s->capacity = cap); }
@@ -93,4 +93,53 @@ u8 equals_stack_string(Stack_String *a, Stack_String *b) {
     }
   }
   return 1;
+}
+
+String file_get_content(char *fn) {
+  String tmp = new_String();
+  char c = EOF;
+  FILE *f = fopen(fn, "r");
+  if (f == NULL) {
+    return tmp;
+  }
+  while ((c = fgetc(f)) != EOF) {
+    push_String(&tmp, c);
+  }
+  fclose(f);
+  return tmp;
+}
+
+char *type_string(token_type t) {
+  switch (t) {
+  case TOKEN_UNIDENTIFIED:
+    return "NONE";
+    break;
+  case TOKEN_IDENTIFIER:
+    return "ID";
+    break;
+  case TOKEN_NUMBER:
+    return "NUM";
+    break;
+  case TOKEN_STRING:
+    return "STR";
+    break;
+  case TOKEN_COMMENT_SL:
+    return "CMSL";
+    break;
+  case TOKEN_COMMENT_ML:
+    return "CMML";
+    break;
+  case TOKEN_OPERATOR:
+    return "OP";
+    break;
+  case TOKEN_SPECIAL:
+    return "SPE";
+    break;
+  case TOKEN_MACRO_BEGIN:
+    return "MACRO B";
+    break;
+  case TOKEN_MACRO_END:
+    return "MACRO E";
+    break;
+  }
 }
