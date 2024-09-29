@@ -9,23 +9,31 @@ declare_template_stack_c(char, String);
 declare_template_stack_c(String, Stack_String);
 
 typedef enum {
+  TOKEN_COMMENT_SL,
+  TOKEN_COMMENT_ML,
   TOKEN_IDENTIFIER,
   TOKEN_STRING,
   TOKEN_NUMBER,
-  TOKEN_COMMENT_SL,
-  TOKEN_COMMENT_ML,
   TOKEN_OPERATOR,
   TOKEN_SPECIAL,
   TOKEN_MACRO_BEGIN,
   TOKEN_MACRO_END,
+  TOKEN_TONDA_BEGIN,
+  TOKEN_TONDA_END,
+  TOKEN_QUADRA_BEGIN,
+  TOKEN_QUADRA_END,
+  TOKEN_GRAFFA_BEGIN,
+  TOKEN_GRAFFA_END,
 } token_type;
 
 typedef struct {
   token_type type;
-  String * str;
+  String *str;
 } Token;
 
 declare_template_stack_c(Token, Stack_Token);
+
+extern Stack_Token g_tokens;
 
 char *c_str(String *str);
 String from_cstr(char *str);
