@@ -111,9 +111,6 @@ String file_get_content(char *fn) {
 
 char *type_string(token_type t) {
   switch (t) {
-  case TOKEN_UNIDENTIFIED:
-    return "NONE";
-    break;
   case TOKEN_IDENTIFIER:
     return "ID";
     break;

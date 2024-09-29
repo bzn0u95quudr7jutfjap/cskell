@@ -34,27 +34,6 @@ bool is_number1(char c) {
   return is_number1_first(c) || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F') || c == 'L' || c == 'x' || c == 'X';
 }
 
-typedef struct {
-  token_type type;
-  bool (*fn)(char c);
-} pair_token_type_function;
-
-token_type get_type_of_char(char c) {
-  static pair_token_type_function pairs[] = {
-      {.type = TOKEN_UNIDENTIFIED, .fn = is_white},      {.type = TOKEN_SPECIAL, .fn = is_special},
-      {.type = TOKEN_STRING, .fn = is_string_delimiter}, {.type = TOKEN_OPERATOR, .fn = is_operator},
-      {.type = TOKEN_IDENTIFIER, .fn = is_name_first},   {.type = TOKEN_NUMBER, .fn = is_number1_first},
-  };
-  static u32 len = (sizeof(pairs) / sizeof(*pairs));
-
-  for (u32 i = 0; i < len; i++) {
-    if (pairs[i].fn(c)) {
-      return pairs[i].type;
-    }
-  }
-  return pairs[0].type;
-}
-
 String *pushNewString(Stack_String *tokens) {
   push(tokens, new_String());
   return at(tokens, -1);
@@ -73,15 +52,10 @@ Stack_String tokenizer(String *stream_string) {
   free_Stack_Token(&g_tokens);
 
   while ((c = speekc(stream)) != EOF) {
-    if (macro && c != '\\' && speekoffset(stream, 1) == '\n') {
+    if (macro && c == '\n' && speekoffset(stream, -1) != '\\') {
       macro = 0;
-      token_type t = get_type_of_char(c);
-      if (t != TOKEN_UNIDENTIFIED) {
-        push(pushNewString(tokens), c);
-        push(&g_tokens, (Token){.type = t});
-      }
+      sgetc(stream);
       push(tokens, from_cstr("\n"));
-      sseekcur(stream, 2);
       push(&g_tokens, (Token){.type = TOKEN_MACRO_END});
     } else if (macro && c == '#') {
       push(pushNewString(tokens), sgetc(stream));

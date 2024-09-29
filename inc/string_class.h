@@ -9,7 +9,6 @@ declare_template_stack_c(char, String);
 declare_template_stack_c(String, Stack_String);
 
 typedef enum {
-  TOKEN_UNIDENTIFIED,
   TOKEN_IDENTIFIER,
   TOKEN_STRING,
   TOKEN_NUMBER,
