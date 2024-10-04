@@ -7,7 +7,7 @@
 #include <string_class.h>
 #include <token.h>
 
-bool is_any_of(char c, size_t size, const char cs[]) {
+u8 is_any_of(char c, size_t size, const char cs[]) {
   for (size_t i = 0; i < size; i++) {
     if (c == cs[i]) {
       return true;

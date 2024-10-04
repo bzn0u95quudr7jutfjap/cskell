@@ -1,6 +1,7 @@
 #include "test.h"
 #include "string_class.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 u0 exec_test(testdata *t) { t->vtable.exec(t); }
 u0 print_test(testdata *t) { t->vtable.print(t); }
