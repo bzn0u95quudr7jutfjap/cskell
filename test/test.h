@@ -3,7 +3,6 @@
 
 #include <int.h>
 #include <string_class.h>
-#include <token.h>
 
 u8 equals_stack_string(Stack_String *a, Stack_String *b);
 u0 print_stack_string(Stack_String *output);

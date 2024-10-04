@@ -1,11 +1,9 @@
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include <stack.h>
 #include <string_class.h>
-#include <token.h>
 
 u8 is_any_of(char c, size_t size, const char cs[]) {
   for (size_t i = 0; i < size; i++) {

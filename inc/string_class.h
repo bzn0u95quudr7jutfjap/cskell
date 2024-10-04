@@ -35,6 +35,9 @@ declare_template_stack_c(Token, Stack_Token);
 
 extern Stack_Token g_tokens;
 
+u8 is_any_of(char c, size_t size, const char cs[]);
+Stack_String tokenizer(String * stream);
+
 char *c_str(String *str);
 String from_cstr(char *str);
 void move_into(String *dst, String *src);

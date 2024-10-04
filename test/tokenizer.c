@@ -3,7 +3,6 @@
 #include <int.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <token.h>
 
 extern Stack_Token g_tokens;
 

@@ -6,7 +6,6 @@
 
 #include <stack.h>
 #include <string_class.h>
-#include <token.h>
 
 #if 1
 
