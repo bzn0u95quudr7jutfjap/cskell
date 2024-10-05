@@ -4,20 +4,22 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-extern Stack_Token g_tokens;
-
 int main(int argc, char *argv[]) {
   if (argc < 2) {
     return 0;
   }
-  String codice = file_get_content(argv[1]);
-  Stack_String token = tokenizer(&codice);
-  for (u32 i = 0; i < token.size; i++) {
-    printf("%16s: ", type_string(at(&g_tokens, i)->type));
-    print_string(at(&token, i));
+  String view = {};
+  Formatter tokens = {};
+  tokens.str = file_get_content(argv[1]);
+  tokenizer(&tokens);
+  for (u32 i = 0; i < tokens.tokens.size; i++) {
+    Token *t = at(&tokens.tokens, i);
+    printf("%16s: ", type_string(t->type));
+    view.data = tokens.str.data + t->begin;
+    view.size = t->size;
+    print_string(&view);
     printf("\n");
   }
-  free_String(&codice);
-  free_Stack_String(&token);
+  free_Formatter(&tokens);
   return 0;
 }

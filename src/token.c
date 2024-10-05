@@ -32,113 +32,136 @@ bool is_number1(char c) {
   return is_number1_first(c) || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F') || c == 'L' || c == 'x' || c == 'X';
 }
 
-String *pushNewString(Stack_String *tokens) {
-  push(tokens, new_String());
-  return at(tokens, -1);
+u0 push_macro_begin(Stack_Token *tokens, Iter_String *stream) {
+  push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_MACRO_BEGIN}));
+  sgetc(stream);
 }
 
-Stack_Token g_tokens = {};
+u0 push_macro_end(Stack_Token *tokens, Iter_String *stream) {
+  push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_MACRO_END}));
+  sgetc(stream);
+}
 
-Stack_String tokenizer(String *stream_string) {
-  Iter_String stream_string_obj = sseekres(stream_string);
+u0 push_identifier(Stack_Token *tokens, Iter_String *stream) {
+  push(tokens, ((Token){.begin = stream->idx, .size = 0, .type = TOKEN_IDENTIFIER}));
+  Token *t = at(tokens, -1);
+  while (is_name(sgetc(stream))) {
+    t->size++;
+  }
+  sseekcur(stream, -1);
+}
+
+u0 push_special(Stack_Token *tokens, Iter_String *stream) {
+  push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_SPECIAL}));
+  sgetc(stream);
+}
+
+u0 push_comment_sline(Stack_Token *tokens, Iter_String *stream) {
+  push(tokens, ((Token){.begin = stream->idx, .size = 0, .type = TOKEN_COMMENT_SL}));
+  Token *t = at(tokens, -1);
+  char c;
+  while ((c = sgetc(stream)) != '\n' && c != EOF) {
+    t->size++;
+  }
+}
+
+u0 push_comment_mline(Stack_Token *tokens, Iter_String *stream) {
+  push(tokens, ((Token){.begin = stream->idx, .size = 0, .type = TOKEN_COMMENT_ML}));
+  Token *t = at(tokens, -1);
+  char c;
+  while ((c = sgetc(stream)) != EOF && !(c == '*' && speekc(stream) == '/')) {
+    t->size++;
+  }
+  if (c != EOF) {
+    t->size += 2;
+    sgetc(stream);
+  }
+}
+
+u0 push_operator(Stack_Token *tokens, Iter_String *stream) {
+  push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_OPERATOR}));
+  sgetc(stream);
+  if (is_operator(speekc(stream))) {
+    at(tokens, -1)->size++;
+    sgetc(stream);
+  }
+}
+
+u0 push_number(Stack_Token *tokens, Iter_String *stream) {
+  push(tokens, ((Token){.begin = stream->idx, .size = 0, .type = TOKEN_NUMBER}));
+  Token *t = at(tokens, -1);
+  while (is_number1(sgetc(stream))) {
+    t->size++;
+  }
+  sseekcur(stream, -1);
+}
+
+u0 push_string(Stack_Token *tokens, Iter_String *stream) {
+  push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_STRING}));
+  Token *t = at(tokens, -1);
+  char delimiter = sgetc(stream);
+  char c;
+  while ((c = sgetc(stream)) != EOF && c != delimiter && c != '\n') {
+    t->size++;
+    if (c == '\\') {
+      t->size++;
+      sgetc(stream);
+    }
+  }
+  if (c == delimiter) {
+    t->size++;
+  } else {
+    sseekcur(stream, -1);
+  }
+}
+
+u0 tokenizer(Formatter *stream_string) {
+  Iter_String stream_string_obj = sseekres(&stream_string->str);
+  Stack_Token *tokens = &stream_string->tokens;
   Iter_String *stream = &stream_string_obj;
   u8 macro = 0;
   char c = EOF;
-  Stack_String tokens_obj = new_Stack_String();
-  Stack_String *tokens = &tokens_obj;
-
-  free_Stack_Token(&g_tokens);
 
   while ((c = speekc(stream)) != EOF) {
     if (macro && c == '\n' && speekoffset(stream, -1) != '\\') {
+      push_macro_end(tokens, stream);
       macro = 0;
-      sgetc(stream);
-      push(tokens, from_cstr("\n"));
-      push(&g_tokens, (Token){.type = TOKEN_MACRO_END});
     } else if (macro && c == '#') {
-      push(pushNewString(tokens), sgetc(stream));
-      push(&g_tokens, (Token){.type = TOKEN_MACRO_BEGIN});
+      push_macro_begin(tokens, stream);
     } else if (c == '#') {
       macro = 1;
     } else if (is_name_first(c)) {
-      String *token = pushNewString(tokens);
-      while (is_name(c = sgetc(stream))) {
-        push(token, c);
-      }
-      sseekcur(stream, -1);
-      push(&g_tokens, (Token){.type = TOKEN_IDENTIFIER});
+      push_identifier(tokens, stream);
     } else if (is_special(c)) {
-      String *token = pushNewString(tokens);
-      push(token, sgetc(stream));
-      push(&g_tokens, (Token){.type = TOKEN_SPECIAL});
+      push_special(tokens, stream);
     } else if (c == '/' && speekoffset(stream, 1) == '/') {
-      String *token = pushNewString(tokens);
-      push(token, sgetc(stream));
-      while ((c = sgetc(stream)) != '\n' && c != EOF) {
-        push(token, c);
-      }
-      push(&g_tokens, (Token){.type = TOKEN_COMMENT_SL});
+      push_comment_sline(tokens, stream);
     } else if (c == '/' && speekoffset(stream, 1) == '*') {
-      String *token = pushNewString(tokens);
-      push(token, sgetc(stream));
-      while ((c = sgetc(stream)) != EOF && !(c == '*' && speekc(stream) == '/')) {
-        push(token, c);
-      }
-      if (c != EOF) {
-        push(token, c);
-        push(token, sgetc(stream));
-      }
-      push(&g_tokens, (Token){.type = TOKEN_COMMENT_ML});
+      push_comment_mline(tokens, stream);
     } else if (is_operator(c)) {
-      String *token = pushNewString(tokens);
-      push(token, sgetc(stream));
-      if (is_operator(c = sgetc(stream))) {
-        push(token, c);
-      } else {
-        sseekcur(stream, -1);
-      }
-      push(&g_tokens, (Token){.type = TOKEN_OPERATOR});
+      push_operator(tokens, stream);
     } else if (is_number1(c)) {
-      String *token = pushNewString(tokens);
-      push(token, sgetc(stream));
-      while (is_number1(c = sgetc(stream))) {
-        push(token, c);
-      }
-      sseekcur(stream, -1);
-      push(&g_tokens, (Token){.type = TOKEN_NUMBER});
+      push_number(tokens, stream);
     } else if (is_string_delimiter(c)) {
-      char delimiter = c;
-      String *token = pushNewString(tokens);
-      push(token, sgetc(stream));
-      while ((c = sgetc(stream)) != EOF && c != delimiter && c != '\n') {
-        push(token, c);
-        if (c == '\\') {
-          push(token, sgetc(stream));
-        }
-      }
-      if (c == delimiter) {
-        push(token, c);
-      } else {
-        sseekcur(stream, -1);
-      }
-      push(&g_tokens, (Token){.type = TOKEN_STRING});
+      push_string(tokens, stream);
     } else {
       sgetc(stream);
     }
   }
   if (macro) {
-    push(&tokens_obj, from_cstr("\n"));
-    push(&g_tokens, (Token){.type = TOKEN_MACRO_END});
+    push(&stream_string->str, '\n');
+    push(tokens, ((Token){.begin = stream_string->str.size - 1, .size = 1, .type = TOKEN_MACRO_END}));
   }
-  return tokens_obj;
+  // return tokens_obj;
 }
 
-Stack_String parse_code_into_words(FILE *stream) {
+Formatter parse_code_into_words(FILE *stream) {
   String s = new_String();
   fseek(stream, 0, SEEK_SET);
   char c;
   while ((c = fgetc(stream)) != EOF) {
     push(&s, c);
   }
-  return tokenizer(&s);
+  // return tokenizer(&s);
+  return (Formatter){};
 }

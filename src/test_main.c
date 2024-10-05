@@ -24,8 +24,7 @@ Stack_String ss_ca(int argc, char **argv) {
                                   .tokenizer =                                                                         \
                                       {                                                                                \
                                           .function = tokenizer,                                                       \
-                                          .input = from_cstr(a_i),                                                     \
-                                          .output = new_Stack_String(),                                                \
+                                          .input = {.str = from_cstr(a_i)},                                            \
                                           .atteso = ss_ca(sizeof(o) / sizeof(*o), o),                                  \
                                       },                                                                               \
                               });                                                                                      \

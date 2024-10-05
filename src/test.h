@@ -4,13 +4,9 @@
 #include <int.h>
 #include <string_class.h>
 
-u8 equals_stack_string(Stack_String *a, Stack_String *b);
-u0 print_stack_string(Stack_String *output);
-
 typedef struct {
-  Stack_String (*function)(String *);
-  String input;
-  Stack_String output;
+  u0 (*function)(Formatter *);
+  Formatter input;
   Stack_String atteso;
 } test_tokenizer;
 
@@ -22,14 +18,27 @@ typedef struct {
   u0 (*free)(testdata *);
 } testdata_vtable;
 
+typedef enum {
+  CODE_OK,
+  CODE_NULL_RESULT,
+  CODE_STR_NULL_RESULT,
+  CODE_TOKEN_STR_LEN_DIFFER,
+  CODE_TOKEN_LEN_DIFFER,
+  CODE_TOKEN_STR_DIFFER,
+} testcode;
+
 struct testdata {
   char *name;
-  u32 code;
+  testcode code;
   testdata_vtable vtable;
   union {
     test_tokenizer tokenizer;
   };
 };
+
+u0 print_stack_string(Stack_String *output);
+u0 print_formatter(Formatter *output);
+testcode equals_formatter_strings(Formatter *a, Stack_String *b);
 
 char *status(testdata *t);
 u8 success(testdata *t);

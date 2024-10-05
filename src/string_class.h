@@ -28,22 +28,26 @@ typedef enum {
 
 typedef struct {
   token_type type;
-  String *str;
+  u32 begin;
+  u32 size;
 } Token;
 
 declare_template_stack_c(Token, Stack_Token);
 
-extern Stack_Token g_tokens;
+typedef struct {
+  String str;
+  Stack_Token tokens;
+} Formatter;
+
+u0 free_Formatter(Formatter *fmt);
 
 u8 is_any_of(char c, size_t size, const char cs[]);
-Stack_String tokenizer(String * stream);
+u0 tokenizer(Formatter *stream);
 
 char *c_str(String *str);
 String from_cstr(char *str);
 void move_into(String *dst, String *src);
 void String_delete(String *str);
-
-u8 equals_string(String *a, String *b);
 
 typedef struct {
   String *str;

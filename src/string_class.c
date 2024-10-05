@@ -36,6 +36,11 @@ void free_Stack_Token(Stack_Token *stack) {
   *stack = new_Stack_Token();
 }
 
+u0 free_Formatter(Formatter *fmt) {
+  free_String(&fmt->str);
+  free_Stack_Token(&fmt->tokens);
+}
+
 char *c_str(String *str) {
   if (str == NULL) {
     return NULL;
@@ -43,10 +48,6 @@ char *c_str(String *str) {
   push_String(str, '\0');
   pop_String(str);
   return str->data;
-}
-
-u8 equals_string(String *a, String *b) {
-  return a != NULL && b != NULL && ((a == b) || ((a->size == b->size) && strcmp(c_str(a), c_str(b)) == 0));
 }
 
 String from_cstr(char *str) {
