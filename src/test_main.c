@@ -74,9 +74,9 @@ int main(int argc, char *argv[]) {
   // test per le macro
   push_test_tokenizer("token_macro_semplice", "#define a 0", {"#", "define", "a", "0", "\n"});
   push_test_tokenizer("macro_semplice_con_concatenazione", "#define a a##a",
-                      {"#", "define", "a", "a", "#", "#", "a", "\n"});
+                      {"#", "define", "a", "a", "##", "a", "\n"});
   push_test_tokenizer("token_macro_semplice_con_concatenazione_con_nomi_strani", "#define a a_##a",
-                      {"#", "define", "a", "a_", "#", "#", "a", "\n"});
+                      {"#", "define", "a", "a_", "##", "a", "\n"});
   push_test_tokenizer("token_macro_funzionale_semplice", "#define a() a", {"#", "define", "a", "(", ")", "a", "\n"});
   push_test_tokenizer("token_macro_funzionale_semplice", "#define count(a) (sizeof(a)/sizeof(*a))",
                       {"#", "define", "count", "(", "a", ")", "(", "sizeof", "(", "a", ")", "/", "sizeof", "(", "*",
