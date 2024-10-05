@@ -5,6 +5,10 @@
 #include <stack.h>
 #include <string_class.h>
 
+typedef struct {
+  u8 macro;
+} tokenizer_flags;
+
 u8 is_any_of(char c, size_t size, const char cs[]) {
   for (size_t i = 0; i < size; i++) {
     if (c == cs[i]) {
@@ -21,9 +25,9 @@ u8 is_any_of(char c, size_t size, const char cs[]) {
   }
 
 DEFINE_CSET(is_white, " \n\t")
-DEFINE_CSET(is_special, "{}()[]#.;,")
+DEFINE_CSET(is_special, "{}()[].;,")
 DEFINE_CSET(is_string_delimiter, "'\"")
-DEFINE_CSET(is_operator, "+-*/%!=&|^><?:")
+DEFINE_CSET(is_operator, "+-*/%!=&|^><?:#")
 
 bool is_name_first(char c) { return (c == '_') || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'); }
 bool is_name(char c) { return is_name_first(c) || ('0' <= c && c <= '9'); }
@@ -115,40 +119,75 @@ u0 push_string(Stack_Token *tokens, Iter_String *stream) {
   }
 }
 
+u0 push_nothing(Stack_Token *tokens, Iter_String *stream) { sgetc(stream); }
+
+u8 is_macro_end(Iter_String *stream, tokenizer_flags *flags) {
+  u8 ret = flags->macro && speekc(stream) == '\n' && speekoffset(stream, -1) != '\\';
+  flags->macro = ret ? 0 : flags->macro;
+  return ret;
+}
+
+u8 is_macro_begin(Iter_String *stream, tokenizer_flags *flags) {
+  u8 ret = !flags->macro && speekc(stream) == '#';
+  flags->macro = ret ? 1 : flags->macro;
+  return ret;
+}
+
+u8 is_name_begin(Iter_String *stream, tokenizer_flags *flags) { return is_name_first(speekc(stream)); }
+
+u8 is_special_begin(Iter_String *stream, tokenizer_flags *flags) { return is_special(speekc(stream)); }
+
+u8 is_operator_begin(Iter_String *stream, tokenizer_flags *flags) { return is_operator(speekc(stream)); }
+
+u8 is_number_begin(Iter_String *stream, tokenizer_flags *flags) { return is_number1_first(speekc(stream)); }
+
+u8 is_string_begin(Iter_String *stream, tokenizer_flags *flags) { return is_string_delimiter(speekc(stream)); }
+
+u8 is_comment_sline_begin(Iter_String *stream, tokenizer_flags *flags) {
+  return speekc(stream) == '/' && speekoffset(stream, 1) == '/';
+}
+u8 is_comment_mline_begin(Iter_String *stream, tokenizer_flags *flags) {
+  return speekc(stream) == '/' && speekoffset(stream, 1) == '*';
+}
+
+u8 is_otherwise(Iter_String *stream, tokenizer_flags *flags) { return 1; }
+
+typedef u8 (*func_is_type)(Iter_String *, tokenizer_flags *);
+typedef u0 (*func_push_token)(Stack_Token *, Iter_String *);
+typedef struct {
+  func_is_type is_type;
+  func_push_token push_token;
+} is_push_struct;
+
 u0 tokenizer(Formatter *stream_string) {
   Iter_String stream_string_obj = sseekres(&stream_string->str);
   Stack_Token *tokens = &stream_string->tokens;
   Iter_String *stream = &stream_string_obj;
-  u8 macro = 0;
-  char c = EOF;
+  tokenizer_flags flags = {};
+  static is_push_struct is_push_array[] = {
+      {.is_type = is_macro_end, .push_token = push_macro_end},
+      {.is_type = is_macro_begin, .push_token = push_macro_begin},
+      {.is_type = is_name_begin, .push_token = push_identifier},
+      {.is_type = is_special_begin, .push_token = push_special},
+      {.is_type = is_comment_sline_begin, .push_token = push_comment_sline},
+      {.is_type = is_comment_mline_begin, .push_token = push_comment_mline},
+      {.is_type = is_operator_begin, .push_token = push_operator},
+      {.is_type = is_number_begin, .push_token = push_number},
+      {.is_type = is_string_begin, .push_token = push_string},
+      {.is_type = is_otherwise, .push_token = push_nothing},
+  };
+  static u32 is_push_array_len = sizeof(is_push_array) / sizeof(*is_push_array);
 
+  char c = EOF;
   while ((c = speekc(stream)) != EOF) {
-    if (macro && c == '\n' && speekoffset(stream, -1) != '\\') {
-      push_macro_end(tokens, stream);
-      macro = 0;
-    } else if (macro && c == '#') {
-      push_macro_begin(tokens, stream);
-    } else if (c == '#') {
-      macro = 1;
-    } else if (is_name_first(c)) {
-      push_identifier(tokens, stream);
-    } else if (is_special(c)) {
-      push_special(tokens, stream);
-    } else if (c == '/' && speekoffset(stream, 1) == '/') {
-      push_comment_sline(tokens, stream);
-    } else if (c == '/' && speekoffset(stream, 1) == '*') {
-      push_comment_mline(tokens, stream);
-    } else if (is_operator(c)) {
-      push_operator(tokens, stream);
-    } else if (is_number1(c)) {
-      push_number(tokens, stream);
-    } else if (is_string_delimiter(c)) {
-      push_string(tokens, stream);
-    } else {
-      sgetc(stream);
+    for (u32 i = 0; i < is_push_array_len; i++) {
+      if (is_push_array[i].is_type(stream, &flags)) {
+        is_push_array[i].push_token(tokens, stream);
+        break;
+      }
     }
   }
-  if (macro) {
+  if (flags.macro) {
     push(&stream_string->str, '\n');
     push(tokens, ((Token){.begin = stream_string->str.size - 1, .size = 1, .type = TOKEN_MACRO_END}));
   }
