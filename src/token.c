@@ -7,7 +7,7 @@
 
 typedef struct {
   u8 macro;
-} tokenizer_flags;
+} tokenizer_env;
 
 u8 is_any_of(char c, size_t size, const char cs[]) {
   for (size_t i = 0; i < size; i++) {
@@ -36,17 +36,17 @@ bool is_number1(char c) {
   return is_number1_first(c) || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F') || c == 'L' || c == 'x' || c == 'X';
 }
 
-u0 push_macro_begin(Stack_Token *tokens, Iter_String *stream) {
+u0 push_macro_begin(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
   push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_MACRO_BEGIN}));
   sgetc(stream);
 }
 
-u0 push_macro_end(Stack_Token *tokens, Iter_String *stream) {
+u0 push_macro_end(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
   push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_MACRO_END}));
   sgetc(stream);
 }
 
-u0 push_identifier(Stack_Token *tokens, Iter_String *stream) {
+u0 push_identifier(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
   push(tokens, ((Token){.begin = stream->idx, .size = 0, .type = TOKEN_IDENTIFIER}));
   Token *t = at(tokens, -1);
   while (is_name(sgetc(stream))) {
@@ -55,12 +55,12 @@ u0 push_identifier(Stack_Token *tokens, Iter_String *stream) {
   sseekcur(stream, -1);
 }
 
-u0 push_special(Stack_Token *tokens, Iter_String *stream) {
+u0 push_special(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
   push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_SPECIAL}));
   sgetc(stream);
 }
 
-u0 push_comment_sline(Stack_Token *tokens, Iter_String *stream) {
+u0 push_comment_sline(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
   push(tokens, ((Token){.begin = stream->idx, .size = 0, .type = TOKEN_COMMENT_SL}));
   Token *t = at(tokens, -1);
   char c;
@@ -69,7 +69,7 @@ u0 push_comment_sline(Stack_Token *tokens, Iter_String *stream) {
   }
 }
 
-u0 push_comment_mline(Stack_Token *tokens, Iter_String *stream) {
+u0 push_comment_mline(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
   push(tokens, ((Token){.begin = stream->idx, .size = 0, .type = TOKEN_COMMENT_ML}));
   Token *t = at(tokens, -1);
   char c;
@@ -82,7 +82,7 @@ u0 push_comment_mline(Stack_Token *tokens, Iter_String *stream) {
   }
 }
 
-u0 push_operator(Stack_Token *tokens, Iter_String *stream) {
+u0 push_operator(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
   push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_OPERATOR}));
   sgetc(stream);
   if (is_operator(speekc(stream))) {
@@ -91,7 +91,7 @@ u0 push_operator(Stack_Token *tokens, Iter_String *stream) {
   }
 }
 
-u0 push_number(Stack_Token *tokens, Iter_String *stream) {
+u0 push_number(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
   push(tokens, ((Token){.begin = stream->idx, .size = 0, .type = TOKEN_NUMBER}));
   Token *t = at(tokens, -1);
   while (is_number1(sgetc(stream))) {
@@ -100,7 +100,7 @@ u0 push_number(Stack_Token *tokens, Iter_String *stream) {
   sseekcur(stream, -1);
 }
 
-u0 push_string(Stack_Token *tokens, Iter_String *stream) {
+u0 push_string(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
   push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_STRING}));
   Token *t = at(tokens, -1);
   char delimiter = sgetc(stream);
@@ -119,41 +119,41 @@ u0 push_string(Stack_Token *tokens, Iter_String *stream) {
   }
 }
 
-u0 push_nothing(Stack_Token *tokens, Iter_String *stream) { sgetc(stream); }
+u0 push_nothing(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) { sgetc(stream); }
 
-u8 is_macro_end(Iter_String *stream, tokenizer_flags *flags) {
-  u8 ret = flags->macro && speekc(stream) == '\n' && speekoffset(stream, -1) != '\\';
-  flags->macro = ret ? 0 : flags->macro;
+u8 is_macro_end(Iter_String *stream, tokenizer_env *env) {
+  u8 ret = env->macro && speekc(stream) == '\n' && speekoffset(stream, -1) != '\\';
+  env->macro = ret ? 0 : env->macro;
   return ret;
 }
 
-u8 is_macro_begin(Iter_String *stream, tokenizer_flags *flags) {
-  u8 ret = !flags->macro && speekc(stream) == '#';
-  flags->macro = ret ? 1 : flags->macro;
+u8 is_macro_begin(Iter_String *stream, tokenizer_env *env) {
+  u8 ret = !env->macro && speekc(stream) == '#';
+  env->macro = ret ? 1 : env->macro;
   return ret;
 }
 
-u8 is_name_begin(Iter_String *stream, tokenizer_flags *flags) { return is_name_first(speekc(stream)); }
+u8 is_name_begin(Iter_String *stream, tokenizer_env *env) { return is_name_first(speekc(stream)); }
 
-u8 is_special_begin(Iter_String *stream, tokenizer_flags *flags) { return is_special(speekc(stream)); }
+u8 is_special_begin(Iter_String *stream, tokenizer_env *env) { return is_special(speekc(stream)); }
 
-u8 is_operator_begin(Iter_String *stream, tokenizer_flags *flags) { return is_operator(speekc(stream)); }
+u8 is_operator_begin(Iter_String *stream, tokenizer_env *env) { return is_operator(speekc(stream)); }
 
-u8 is_number_begin(Iter_String *stream, tokenizer_flags *flags) { return is_number1_first(speekc(stream)); }
+u8 is_number_begin(Iter_String *stream, tokenizer_env *env) { return is_number1_first(speekc(stream)); }
 
-u8 is_string_begin(Iter_String *stream, tokenizer_flags *flags) { return is_string_delimiter(speekc(stream)); }
+u8 is_string_begin(Iter_String *stream, tokenizer_env *env) { return is_string_delimiter(speekc(stream)); }
 
-u8 is_comment_sline_begin(Iter_String *stream, tokenizer_flags *flags) {
+u8 is_comment_sline_begin(Iter_String *stream, tokenizer_env *env) {
   return speekc(stream) == '/' && speekoffset(stream, 1) == '/';
 }
-u8 is_comment_mline_begin(Iter_String *stream, tokenizer_flags *flags) {
+u8 is_comment_mline_begin(Iter_String *stream, tokenizer_env *env) {
   return speekc(stream) == '/' && speekoffset(stream, 1) == '*';
 }
 
-u8 is_otherwise(Iter_String *stream, tokenizer_flags *flags) { return 1; }
+u8 is_otherwise(Iter_String *stream, tokenizer_env *env) { return 1; }
 
-typedef u8 (*func_is_type)(Iter_String *, tokenizer_flags *);
-typedef u0 (*func_push_token)(Stack_Token *, Iter_String *);
+typedef u8 (*func_is_type)(Iter_String *, tokenizer_env *);
+typedef u0 (*func_push_token)(Stack_Token *, Iter_String *, tokenizer_env *);
 typedef struct {
   func_is_type is_type;
   func_push_token push_token;
@@ -163,7 +163,7 @@ u0 tokenizer(Formatter *stream_string) {
   Iter_String stream_string_obj = sseekres(&stream_string->str);
   Stack_Token *tokens = &stream_string->tokens;
   Iter_String *stream = &stream_string_obj;
-  tokenizer_flags flags = {};
+  tokenizer_env env = {};
   static is_push_struct is_push_array[] = {
       {.is_type = is_macro_end, .push_token = push_macro_end},
       {.is_type = is_macro_begin, .push_token = push_macro_begin},
@@ -181,13 +181,13 @@ u0 tokenizer(Formatter *stream_string) {
   char c = EOF;
   while ((c = speekc(stream)) != EOF) {
     for (u32 i = 0; i < is_push_array_len; i++) {
-      if (is_push_array[i].is_type(stream, &flags)) {
-        is_push_array[i].push_token(tokens, stream);
+      if (is_push_array[i].is_type(stream, &env)) {
+        is_push_array[i].push_token(tokens, stream, &env);
         break;
       }
     }
   }
-  if (flags.macro) {
+  if (env.macro) {
     push(&stream_string->str, '\n');
     push(tokens, ((Token){.begin = stream_string->str.size - 1, .size = 1, .type = TOKEN_MACRO_END}));
   }
