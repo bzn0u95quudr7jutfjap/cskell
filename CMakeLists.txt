@@ -41,5 +41,5 @@ target_link_libraries(${PROJECT_NAME} haskellformat)
 add_executable(run_tests src/test_main.c)
 target_link_libraries(run_tests haskellformat testing)
 
-add_executable(tokenizer src/test_tokenizer.c)
+add_executable(tokenizer src/main_tokenizer.c)
 target_link_libraries(tokenizer haskellformat testing)
