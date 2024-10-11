@@ -20,6 +20,7 @@ typedef struct {
 
 typedef enum {
   CODE_OK,
+  CODE_NOT_RUN,
   CODE_NULL_RESULT,
   CODE_STR_NULL_RESULT,
   CODE_TOKEN_STR_LEN_DIFFER,
@@ -67,5 +68,7 @@ declare_test_function(test_tokenizer);
 
 String file_get_content(char *fn);
 char *type_string(token_type t);
+
+Stack_String ss_ca(char *strings[], u32 len);
 
 #endif

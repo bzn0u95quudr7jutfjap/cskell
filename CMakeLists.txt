@@ -33,7 +33,7 @@ add_compile_options(${options})
 add_link_options(${options})
 
 add_library(haskellformat SHARED src/token.c src/string_class.c)
-add_library(testing       SHARED src/test.c src/test_token.c)
+add_library(testing       SHARED src/test.c)
 
 add_executable(${PROJECT_NAME} src/main.c)
 target_link_libraries(${PROJECT_NAME} haskellformat)

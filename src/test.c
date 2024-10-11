@@ -184,3 +184,11 @@ char *type_string(token_type t) {
     break;
   }
 }
+
+Stack_String ss_ca(char *strings[], u32 len) {
+  Stack_String ss1 = new_Stack_String();
+  for (int i = 0; i < len; i++) {
+    push_Stack_String(&ss1, from_cstr(strings[i]));
+  }
+  return ss1;
+}
