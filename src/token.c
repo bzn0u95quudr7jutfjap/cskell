@@ -1,6 +1,6 @@
-#include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <stack.h>
@@ -192,6 +192,16 @@ u0 tokenizer(Formatter *stream_string) {
   // return tokens_obj;
 }
 
+u0 format_comment(Formatter *fmt, u32 i, tokenizer_env *env) {
+  Token *t = at(&fmt->tokens, i);
+  String tmp = {.data = fmt->str.data + t->begin, .size = t->size};
+  if (env->prev != TOKEN_COMMENT_SL || env->prev != TOKEN_COMMENT_ML) {
+    t->newline_before = 1;
+  }
+  t->indentation = env->indentation;
+  t->newline_after = 1;
+  env->newline_after = 1;
+}
 u0 format_special(Formatter *fmt, u32 i, tokenizer_env *env) {
   Token *t = at(&fmt->tokens, i);
   String tmp = {.data = fmt->str.data + t->begin, .size = t->size};
@@ -206,7 +216,7 @@ u0 format_special(Formatter *fmt, u32 i, tokenizer_env *env) {
     t->indentation = env->indentation;
     env->indentation += -(env->indentation > 0);
     t->newline_before = 1;
-    t->newline_after = 1;
+    t->newline_after = t->indentation == 0 ? 1 : 2;
     env->newline_after = 1;
     break;
   case ';':
@@ -226,23 +236,35 @@ u0 formatter(Formatter *fmt) {
   tokenizer_env *env = &env_obj;
   for (u32 i = 0; i < fmt->tokens.size; i++) {
     Token *t = at(&fmt->tokens, i);
+    if (env->newline_after) {
+      t->indentation = env->indentation;
+      t->linebegin = 1;
+      env->newline_after = 0;
+    }
     switch (t->type) {
+    case TOKEN_COMMENT_SL:
+    case TOKEN_COMMENT_ML:
+      format_comment(fmt, i, env);
+      break;
     case TOKEN_SPECIAL:
       format_special(fmt, i, env);
       break;
     }
+    env->prev = t->type;
   }
 }
 
+u0 ifp(u32 i, FILE *out, char *str) {
+  while (i--) {
+    fprintf(out, "%s", str);
+  }
+}
 u0 print_formatted_code(FILE *out, Formatter *fmt) {
   for (u32 i = 0; i < fmt->tokens.size; i++) {
     Token *t = at(&fmt->tokens, i);
-    if (t->newline_before) {
-      fprintf(out, "\n");
-    }
-    for (u32 j = 0; j < t->indentation; j++) {
-      fprintf(out, "  ");
-    }
+    ifp(t->newline_before, out, "\n");
+    ifp(t->indentation, out, "  ");
+    ifp(!t->linebegin && !t->newline_before && !t->nospace, out, " ");
     String str = {.data = fmt->str.data + t->begin, .size = t->size};
     int len = str.size;
     if (len != str.size) {
@@ -250,8 +272,6 @@ u0 print_formatted_code(FILE *out, Formatter *fmt) {
       exit(1);
     }
     fprintf(out, "%.*s", len, str.data);
-    if (t->newline_after) {
-      fprintf(out, "\n");
-    }
+    ifp(t->newline_after, out, "\n");
   }
 }
