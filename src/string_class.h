@@ -9,21 +9,21 @@ declare_template_stack_c(char, String);
 declare_template_stack_c(String, Stack_String);
 
 typedef enum {
-  TOKEN_COMMENT_SL,
-  TOKEN_COMMENT_ML,
   TOKEN_IDENTIFIER,
   TOKEN_STRING,
   TOKEN_NUMBER,
   TOKEN_OPERATOR,
   TOKEN_SPECIAL,
+  TOKEN_COMMENT_SL,
+  TOKEN_COMMENT_ML,
   TOKEN_MACRO_BEGIN,
   TOKEN_MACRO_END,
-  TOKEN_TONDA_BEGIN,
-  TOKEN_TONDA_END,
-  TOKEN_QUADRA_BEGIN,
-  TOKEN_QUADRA_END,
-  TOKEN_GRAFFA_BEGIN,
-  TOKEN_GRAFFA_END,
+  //TOKEN_TONDA_BEGIN,
+  //TOKEN_TONDA_END,
+  //TOKEN_QUADRA_BEGIN,
+  //TOKEN_QUADRA_END,
+  //TOKEN_GRAFFA_BEGIN,
+  //TOKEN_GRAFFA_END,
 } token_type;
 
 typedef struct {
@@ -32,14 +32,16 @@ typedef struct {
   u32 size;
   u32 indentation;
   u8 newline_before : 1;
-  u8 newline_after : 1;
+  u8 newline_after : 2;
   u8 nospace : 1;
+  u8 linebegin : 1;
 } Token;
 
 typedef struct {
   u8 macro : 1;
   u8 newline_after : 1;
   u32 indentation;
+  token_type prev;
 } tokenizer_env;
 
 declare_template_stack_c(Token, Stack_Token);
@@ -53,6 +55,7 @@ u0 free_Formatter(Formatter *fmt);
 
 u8 is_any_of(char c, size_t size, const char cs[]);
 u0 tokenizer(Formatter *stream);
+u0 formatter(Formatter *fmt);
 
 char *c_str(String *str);
 String from_cstr(char *str);
