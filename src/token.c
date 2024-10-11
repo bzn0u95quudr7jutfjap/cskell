@@ -7,6 +7,7 @@
 
 typedef struct {
   u8 macro;
+  u32 indentation;
 } tokenizer_env;
 
 u8 is_any_of(char c, size_t size, const char cs[]) {
@@ -57,7 +58,26 @@ u0 push_identifier(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env)
 
 u0 push_special(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
   push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_SPECIAL}));
-  sgetc(stream);
+  Token *t = at(tokens, -1);
+  switch (sgetc(stream)) {
+  case '{':
+    env->indentation += 1;
+    t->indentation = env->indentation;
+    t->newline_before = 1;
+    break;
+  case '}':
+    t->indentation = env->indentation;
+    env->indentation += -(env->indentation > 0);
+    t->newline_before = 1;
+    t->newline_after = 1;
+    break;
+  case ';':
+    t->indentation = env->indentation;
+    t->newline_before = env->indentation > 0;
+    break;
+  default:
+    break;
+  }
 }
 
 u0 push_comment_sline(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {

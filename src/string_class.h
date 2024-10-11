@@ -30,6 +30,9 @@ typedef struct {
   token_type type;
   u32 begin;
   u32 size;
+  u32 indentation;
+  u8 newline_before : 1;
+  u8 newline_after : 1;
 } Token;
 
 declare_template_stack_c(Token, Stack_Token);
