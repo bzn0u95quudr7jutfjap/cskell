@@ -6,6 +6,8 @@
 #include <stack.h>
 #include <string_class.h>
 
+u0 print_formatted_code(FILE * out, Formatter * fmt);
+
 String file_get_contents(char *file) {
   String tmp = new_String();
   char c = EOF;
@@ -23,28 +25,6 @@ String file_get_contents(char *file) {
 String string_view(Formatter *fmt, u32 i) {
   Token *t = at(&fmt->tokens, i);
   return (String){.data = fmt->str.data + t->begin, .size = t->size};
-}
-
-u0 print_formatted_code(FILE *out, Formatter *fmt) {
-  for (u32 i = 0; i < fmt->tokens.size; i++) {
-    Token *t = at(&fmt->tokens, i);
-    if (t->newline_before) {
-      fprintf(out, "\n");
-    }
-    for (u32 j = 0; j < t->indentation; j++) {
-      fprintf(out, "  ");
-    }
-    String str = string_view(fmt, i);
-    int len = str.size;
-    if (len != str.size) {
-      perror("len != size");
-      exit(1);
-    }
-    fprintf(out, "%.*s", len, str.data);
-    if (t->newline_after) {
-      fprintf(out, "\n");
-    }
-  }
 }
 
 #if 1
