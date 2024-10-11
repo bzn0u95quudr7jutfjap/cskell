@@ -33,7 +33,14 @@ typedef struct {
   u32 indentation;
   u8 newline_before : 1;
   u8 newline_after : 1;
+  u8 nospace : 1;
 } Token;
+
+typedef struct {
+  u8 macro : 1;
+  u8 newline_after : 1;
+  u32 indentation;
+} tokenizer_env;
 
 declare_template_stack_c(Token, Stack_Token);
 
