@@ -39,6 +39,7 @@ int main(int argc, char *argv[]) {
   Formatter fmt = {};
   fmt.str = file_get_contents(input);
   tokenizer(&fmt);
+  formatter(&fmt);
   print_formatted_code(stdout, &fmt);
   free_Formatter(&fmt);
   return 0;
