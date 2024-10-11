@@ -1,14 +1,10 @@
+#include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <stack.h>
 #include <string_class.h>
-
-typedef struct {
-  u8 macro;
-  u32 indentation;
-} tokenizer_env;
 
 u8 is_any_of(char c, size_t size, const char cs[]) {
   for (size_t i = 0; i < size; i++) {
@@ -59,25 +55,7 @@ u0 push_identifier(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env)
 u0 push_special(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
   push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_SPECIAL}));
   Token *t = at(tokens, -1);
-  switch (sgetc(stream)) {
-  case '{':
-    env->indentation += 1;
-    t->indentation = env->indentation;
-    t->newline_before = 1;
-    break;
-  case '}':
-    t->indentation = env->indentation;
-    env->indentation += -(env->indentation > 0);
-    t->newline_before = 1;
-    t->newline_after = 1;
-    break;
-  case ';':
-    t->indentation = env->indentation;
-    t->newline_before = env->indentation > 0;
-    break;
-  default:
-    break;
-  }
+  sgetc(stream);
 }
 
 u0 push_comment_sline(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
@@ -214,13 +192,66 @@ u0 tokenizer(Formatter *stream_string) {
   // return tokens_obj;
 }
 
-Formatter parse_code_into_words(FILE *stream) {
-  String s = new_String();
-  fseek(stream, 0, SEEK_SET);
-  char c;
-  while ((c = fgetc(stream)) != EOF) {
-    push(&s, c);
+u0 format_special(Formatter *fmt, u32 i, tokenizer_env *env) {
+  Token *t = at(&fmt->tokens, i);
+  String tmp = {.data = fmt->str.data + t->begin, .size = t->size};
+  char c = *at(&tmp, 0);
+  switch (c) {
+  case '{':
+    env->indentation += 1;
+    t->indentation = env->indentation;
+    t->newline_before = 1;
+    break;
+  case '}':
+    t->indentation = env->indentation;
+    env->indentation += -(env->indentation > 0);
+    t->newline_before = 1;
+    t->newline_after = 1;
+    env->newline_after = 1;
+    break;
+  case ';':
+    t->indentation = env->indentation;
+    t->newline_before = env->indentation > 0;
+    break;
+  case ',':
+    t->nospace = 1;
+    break;
+  default:
+    break;
   }
-  // return tokenizer(&s);
-  return (Formatter){};
+}
+
+u0 formatter(Formatter *fmt) {
+  tokenizer_env env_obj = {};
+  tokenizer_env *env = &env_obj;
+  for (u32 i = 0; i < fmt->tokens.size; i++) {
+    Token *t = at(&fmt->tokens, i);
+    switch (t->type) {
+    case TOKEN_SPECIAL:
+      format_special(fmt, i, env);
+      break;
+    }
+  }
+}
+
+u0 print_formatted_code(FILE *out, Formatter *fmt) {
+  for (u32 i = 0; i < fmt->tokens.size; i++) {
+    Token *t = at(&fmt->tokens, i);
+    if (t->newline_before) {
+      fprintf(out, "\n");
+    }
+    for (u32 j = 0; j < t->indentation; j++) {
+      fprintf(out, "  ");
+    }
+    String str = {.data = fmt->str.data + t->begin, .size = t->size};
+    int len = str.size;
+    if (len != str.size) {
+      perror("len != size");
+      exit(1);
+    }
+    fprintf(out, "%.*s", len, str.data);
+    if (t->newline_after) {
+      fprintf(out, "\n");
+    }
+  }
 }
