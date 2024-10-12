@@ -52,7 +52,8 @@ u8 in(String a[], u32 len, String *b) {
 u8 is_operatore_binario(String *b) {
   static String a[] = {from_cstr("=="), from_cstr("!="), from_cstr(">="), from_cstr("<="), from_cstr("<<"),
                        from_cstr(">>"), from_cstr("||"), from_cstr("&&"), from_cstr("|"),  from_cstr("<"),
-                       from_cstr(">"),  from_cstr("+"),  from_cstr("-"),  from_cstr("/"),  from_cstr("=")};
+                       from_cstr(">"),  from_cstr("+"),  from_cstr("-"),  from_cstr("/"),  from_cstr("="),
+                       from_cstr("##"), from_cstr("?"),  from_cstr(":")};
   static u32 len = sizeof(a) / sizeof(a[0]);
   return in(a, len, b);
 }
@@ -60,6 +61,7 @@ u8 is_operatore_binario(String *b) {
 u8 is_operatore_unario(String *b) {
   static String a[] = {
       from_cstr("!"),
+      from_cstr("#"),
       from_cstr("++"),
       from_cstr("--"),
   };
