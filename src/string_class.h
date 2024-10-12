@@ -25,7 +25,6 @@ typedef struct {
   u32 begin;
   u32 size;
   u32 indentation;
-  u8 newline_before : 1;
   u8 newline_after : 2;
   u8 space_after : 1;
 } Token;

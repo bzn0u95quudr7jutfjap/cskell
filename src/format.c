@@ -34,7 +34,8 @@ String tgets_offset(Iter_Formatter *stream, i32 o) {
 Iter_Formatter tseekres(Formatter *stream) { return (Iter_Formatter){.fmt = stream, .idx = 0}; }
 
 u0 set_newline(Token *t, tokenizer_env *env) {
-  t->newline_before = env->prev->newline_after == 0;
+  env->prev->newline_after = env->prev->newline_after > 0 ? env->prev->newline_after : 1;
+  env->prev->space_after = 0;
   t->indentation = env->indentation;
 }
 
@@ -190,7 +191,6 @@ u0 format_macro_begin(Iter_Formatter *fmt, tokenizer_env *env) {
     t = tseekcur(fmt, 1);
     while (t->type != TOKEN_MACRO_END) {
       t->space_after = 0;
-      t->newline_before = 0;
       t->newline_after = 0;
       t = tseekcur(fmt, 1);
     }
