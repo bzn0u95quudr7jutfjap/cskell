@@ -155,15 +155,22 @@ u0 format_special(Iter_Formatter *fmt, tokenizer_env *env) {
     env->prev->space_after = 0;
     t->space_after = 1;
     break;
+  case '[':
   case '(':
-    if (env->prev->type != TOKEN_OPERATOR && !is_operatore_binario(&tmp)) {
+    if (env->prev != NULL && env->prev->type != TOKEN_OPERATOR && !is_operatore_binario(&tmp)) {
       env->prev->space_after = 0;
+    }
+    String coma = from_cstr(",");
+    String tmp = tgets_offset(fmt, -1);
+    if (es(&tmp, &coma)) {
+      env->prev->space_after = 1;
     }
     t->space_after = 0;
     break;
+  case ']':
   case ')':
     env->prev->space_after = 0;
-    t->space_after = 0;
+    t->space_after = 1;
     break;
   default:
     break;
