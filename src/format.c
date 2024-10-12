@@ -14,7 +14,6 @@ u0 set_newline(Token *t, tokenizer_env *env) {
   t->indentation = env->indentation;
 }
 
-// TODO disambiguare operatori binari e unari
 u8 es(String *a, String *b) { return a->size == b->size && strncmp(a->data, b->data, a->size) == 0; }
 
 u8 in(String a[], u32 len, String *b) {
@@ -54,28 +53,31 @@ u8 is_operatore_ambiguo(String *b) {
 }
 
 u0 format_operator(Formatter *fmt, u32 i, tokenizer_env *env) {
+  static String arrow = from_cstr("->");
+  static String not = from_cstr("!");
+  static String inc = from_cstr("++");
+  static String dec = from_cstr("--");
+  static String clp = from_cstr(")");
   Token *t = at(&fmt->tokens, i);
   String tmp = {.data = fmt->str.data + t->begin, .size = t->size};
-  String arrow = from_cstr("->");
-  String inc = from_cstr("++");
-  String dec = from_cstr("--");
   if (es(&tmp, &arrow)) {
     env->prev->space_after = 0;
     t->space_after = 0;
+  } else if (es(&tmp, &not )) {
+    t->space_after = 0;
+  } else if (es(&tmp, &inc) || es(&tmp, &dec)) {
+    Token *t2 = at(&fmt->tokens, i + 1);
+    String tmp2 = {.data = fmt->str.data + t2->begin, .size = t2->size};
+    if (env->prev->type == TOKEN_IDENTIFIER || (env->prev->type == TOKEN_SPECIAL && es(&tmp2, &clp))) {
+      env->prev->space_after = 0;
+      t->space_after = 1;
+    } else {
+      env->prev->space_after = 1;
+      t->space_after = 0;
+    }
   } else if (is_operatore_binario(&tmp)) {
     env->prev->space_after = 1;
     t->space_after = 1;
-  } else if (is_operatore_unario(&tmp)) {
-    if (es(&tmp, &inc) || es(&tmp, &dec)) {
-      if (env->prev->type == TOKEN_IDENTIFIER) {
-        env->prev->space_after = 1;
-      } else {
-        t->space_after = 0;
-      }
-    } else {
-      env->prev->space_after = 1;
-      t->space_after = 1;
-    }
   } else {
     printf("OPERATORE SCONOSCIUTO :: %.*s\n", (int)tmp.size, tmp.data);
     // exit(1);
