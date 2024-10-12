@@ -67,4 +67,17 @@ char speekc(Iter_String *stream);
 char speekoffset(Iter_String *stream, int o);
 void sseekcur(Iter_String *stream, i32 o);
 
+typedef struct {
+  Formatter *fmt;
+  u32 idx;
+} Iter_Formatter;
+
+Iter_Formatter tseekres(Formatter *stream);
+Token *tpeekoffset(Iter_Formatter *stream, i32 o);
+Token *tpeekt(Iter_Formatter *stream);
+String tgets_offset(Iter_Formatter *stream, i32 o);
+Token *tgett(Iter_Formatter *stream);
+Token *tseekcur(Iter_Formatter *stream, i32 o);
+u8 t_is_end(Iter_Formatter *stream);
+
 #endif

@@ -9,6 +9,30 @@
 #define from_cstr(CSTR)                                                                                                \
   (String) { .data = CSTR, .size = sizeof(CSTR) / sizeof(CSTR[0]) - 1 }
 
+u8 t_is_end(Iter_Formatter *stream) { return !(0 <= stream->idx && stream->idx < stream->fmt->tokens.size); }
+
+Token *tpeekoffset(Iter_Formatter *stream, i32 o) { return at(&stream->fmt->tokens, stream->idx + o); }
+
+Token *tpeekt(Iter_Formatter *stream) { return tpeekoffset(stream, 0); }
+
+Token *tseekcur(Iter_Formatter *stream, i32 o) {
+  stream->idx += o;
+  return tpeekt(stream);
+}
+
+Token *tgett(Iter_Formatter *stream) {
+  Token *t = tpeekt(stream);
+  stream->idx++;
+  return t;
+}
+
+String tgets_offset(Iter_Formatter *stream, i32 o) {
+  Token *t = tpeekoffset(stream, o);
+  return (String){.data = stream->fmt->str.data + t->begin, .size = t->size};
+}
+
+Iter_Formatter tseekres(Formatter *stream) { return (Iter_Formatter){.fmt = stream, .idx = 0}; }
+
 u0 set_newline(Token *t, tokenizer_env *env) {
   t->newline_before = env->prev->newline_after == 0;
   t->indentation = env->indentation;
@@ -52,15 +76,15 @@ u8 is_operatore_ambiguo(String *b) {
   return in(a, len, b);
 }
 
-u0 format_operator(Formatter *fmt, u32 i, tokenizer_env *env) {
+u0 format_operator(Iter_Formatter *fmt, tokenizer_env *env) {
   static String arrow = from_cstr("->");
   static String not = from_cstr("!");
   static String inc = from_cstr("++");
   static String dec = from_cstr("--");
   static String clp = from_cstr(")");
-  Token *t = at(&fmt->tokens, i);
-  String tmp = {.data = fmt->str.data + t->begin, .size = t->size};
-  String tmp2 = {.data = fmt->str.data + env->prev->begin, .size = env->prev->size};
+  Token *t = tpeekt(fmt);
+  String tmp = tgets_offset(fmt, 0);
+  String tmp2 = tgets_offset(fmt, -1);
   u8 tonda_chiusa = env->prev->type == TOKEN_SPECIAL && es(&tmp2, &clp);
   if (es(&tmp, &arrow)) {
     env->prev->space_after = 0;
@@ -95,15 +119,15 @@ u0 format_operator(Formatter *fmt, u32 i, tokenizer_env *env) {
   }
 }
 
-u0 format_comment(Formatter *fmt, u32 i, tokenizer_env *env) {
-  Token *t = at(&fmt->tokens, i);
+u0 format_comment(Iter_Formatter *fmt, tokenizer_env *env) {
+  Token *t = tpeekt(fmt);
   set_newline(t, env);
   t->newline_after = 1;
 }
 
-u0 format_special(Formatter *fmt, u32 i, tokenizer_env *env) {
-  Token *t = at(&fmt->tokens, i);
-  String tmp = {.data = fmt->str.data + t->begin, .size = t->size};
+u0 format_special(Iter_Formatter *fmt, tokenizer_env *env) {
+  Token *t = tpeekt(fmt);
+  String tmp = tgets_offset(fmt, 0);
   char c = *at(&tmp, 0);
   switch (c) {
   case '{':
@@ -144,11 +168,20 @@ u0 format_special(Formatter *fmt, u32 i, tokenizer_env *env) {
   }
 }
 
-u0 formatter(Formatter *fmt) {
+u0 format_macro_begin(Iter_Formatter *fmt, tokenizer_env *env) {
+  if (env->prev != NULL) {
+    env->prev->newline_after = env->prev->type == TOKEN_MACRO_END ? 0 : 2;
+  }
+  env->indentation += 1;
+}
+
+u0 formatter(Formatter *fmttr) {
   tokenizer_env env_obj = {.prev = NULL};
   tokenizer_env *env = &env_obj;
-  for (u32 i = 0; i < fmt->tokens.size; i++) {
-    Token *t = at(&fmt->tokens, i);
+  Iter_Formatter iterfmt = tseekres(fmttr);
+  Iter_Formatter *fmt = &iterfmt;
+  while (!t_is_end(&iterfmt)) {
+    Token *t = tpeekt(fmt);
     if (env->prev != NULL && env->prev->newline_after > 0) {
       t->indentation = env->indentation;
     }
@@ -157,22 +190,26 @@ u0 formatter(Formatter *fmt) {
       t->space_after = 1;
       break;
     case TOKEN_OPERATOR:
-      format_operator(fmt, i, env);
+      format_operator(fmt, env);
       break;
     case TOKEN_COMMENT_SL:
     case TOKEN_COMMENT_ML:
-      format_comment(fmt, i, env);
+      format_comment(fmt, env);
       break;
     case TOKEN_MACRO_END:
-      t->newline_after = 2;
+      env->indentation += -(env->indentation > 0);
+      t->newline_after = 1;
+      break;
+    case TOKEN_MACRO_BEGIN:
+      format_macro_begin(fmt, env);
       break;
     case TOKEN_SPECIAL:
-      format_special(fmt, i, env);
+      format_special(fmt, env);
       break;
     default:
       break;
     }
-    env->prev = t;
+    env->prev = tgett(fmt);
   }
 }
 
