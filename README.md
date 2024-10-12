@@ -2,6 +2,8 @@
 
 注意：日本語できません、本当にごめんなさい。  
 
+[EN](./README-en.md)
+
 ## Descrizione　「記述」
 
 cskell trasforma codice (attualmente solo c) in haskell-style.<br>
