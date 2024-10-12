@@ -8,7 +8,7 @@
 
 u0 set_newline(Token *t, tokenizer_env *env) {
   t->newline_before = env->prev->newline_after == 0;
-  t->indentation = t->newline_before > 0 ? env->indentation : 0;
+  t->indentation = env->indentation;
 }
 
 u0 format_comment(Formatter *fmt, u32 i, tokenizer_env *env) {
