@@ -148,9 +148,16 @@ u0 format_special(Iter_Formatter *fmt, tokenizer_env *env) {
     t->space_after = 0;
     break;
   case ';':
-    set_newline(t, env);
-    env->prev->space_after = 0;
-    t->space_after = 1;
+    if (env->indentation == 0) {
+      if (env->prev != NULL) {
+        env->prev->space_after = 0;
+      }
+      t->newline_after = 2;
+    } else {
+      set_newline(t, env);
+      env->prev->space_after = 0;
+      t->space_after = 1;
+    }
     break;
   case ',':
     env->prev->space_after = 0;
