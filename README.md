@@ -41,6 +41,6 @@ sh compile.sh
 cskell <inputfile｜入力ファイル>  <outputfile｜出力ファイル>
 ```
 
-l'output viene stampato su stdout.
+L'output viene stampato su stdout se outputfile non viene specificato.
 
-STDOUTに出力を書く。
+出力ファイルが選びません場合は、STDOUTに出力を書く。
