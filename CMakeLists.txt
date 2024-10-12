@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
-project(haskellinator)
+project(cskell)
 
-set(compileflags -xc -Iinc)
+set(compileflags -xc -Isrc)
 
 set(functions resize      at        push        pop)
 set(args      stack,cap   stack,i   stack,data  stack)
@@ -26,20 +26,20 @@ if(NOT EXISTS ${cffile})
 endif()
 #message(FATAL_ERROR "${compileflags}")
 
-include_directories(inc/)
+include_directories(src/)
 
 set(options -g -fsanitize=address)
 add_compile_options(${options})
 add_link_options(${options})
 
-add_library(haskellformat SHARED src/token.c src/string_class.c)
-add_library(testing       SHARED test/test.c)
+add_library(haskellformat SHARED src/string_class.c src/token.c src/format.c)
+add_library(testing       SHARED src/test.c)
 
 add_executable(${PROJECT_NAME} src/main.c)
 target_link_libraries(${PROJECT_NAME} haskellformat)
 
-add_executable(run_tests test/main.c)
+add_executable(run_tests src/test_main.c)
 target_link_libraries(run_tests haskellformat testing)
 
-add_executable(tokenizer test/tokenizer.c)
+add_executable(tokenizer src/main_tokenizer.c)
 target_link_libraries(tokenizer haskellformat testing)

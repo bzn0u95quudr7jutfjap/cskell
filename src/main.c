@@ -1,4 +1,3 @@
-#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,11 +5,45 @@
 
 #include <stack.h>
 #include <string_class.h>
-#include <token.h>
+
+u0 print_formatted_code(FILE * out, Formatter * fmt);
+
+String file_get_contents(char *file) {
+  String tmp = new_String();
+  char c = EOF;
+  FILE *stream = fopen(file, "r");
+  if (stream == NULL) {
+    return tmp;
+  }
+  while ((c = fgetc(stream)) != EOF) {
+    push(&tmp, c);
+  }
+  fclose(stream);
+  return tmp;
+}
+
+String string_view(Formatter *fmt, u32 i) {
+  Token *t = at(&fmt->tokens, i);
+  return (String){.data = fmt->str.data + t->begin, .size = t->size};
+}
 
 #if 1
 
-int main(int argc, char *argv[]) { return 0; }
+int main(int argc, char *argv[]) {
+  if (argc != 3) {
+    printf("Uso invalido\n\n$ %s <INPUT FILE> <OUTPUT FILE>\n", argv[0]);
+    return 1;
+  }
+  char *input = argv[1];
+  char *output = argv[2];
+  Formatter fmt = {};
+  fmt.str = file_get_contents(input);
+  tokenizer(&fmt);
+  formatter(&fmt);
+  print_formatted_code(stdout, &fmt);
+  free_Formatter(&fmt);
+  return 0;
+}
 
 #else
 
