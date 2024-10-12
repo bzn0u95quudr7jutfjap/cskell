@@ -60,24 +60,35 @@ u0 format_operator(Formatter *fmt, u32 i, tokenizer_env *env) {
   static String clp = from_cstr(")");
   Token *t = at(&fmt->tokens, i);
   String tmp = {.data = fmt->str.data + t->begin, .size = t->size};
+  String tmp2 = {.data = fmt->str.data + env->prev->begin, .size = env->prev->size};
+  u8 tonda_chiusa = env->prev->type == TOKEN_SPECIAL && es(&tmp2, &clp);
   if (es(&tmp, &arrow)) {
     env->prev->space_after = 0;
     t->space_after = 0;
   } else if (es(&tmp, &not )) {
     t->space_after = 0;
   } else if (es(&tmp, &inc) || es(&tmp, &dec)) {
-    Token *t2 = at(&fmt->tokens, i + 1);
-    String tmp2 = {.data = fmt->str.data + t2->begin, .size = t2->size};
-    if (env->prev->type == TOKEN_IDENTIFIER || (env->prev->type == TOKEN_SPECIAL && es(&tmp2, &clp))) {
+    if (tonda_chiusa || env->prev->type == TOKEN_IDENTIFIER) {
+      // postfix
       env->prev->space_after = 0;
       t->space_after = 1;
     } else {
+      // prefix
       env->prev->space_after = 1;
       t->space_after = 0;
     }
   } else if (is_operatore_binario(&tmp)) {
     env->prev->space_after = 1;
     t->space_after = 1;
+  } else if (is_operatore_ambiguo(&tmp)) {
+    if (tonda_chiusa || env->prev->type == TOKEN_IDENTIFIER) {
+      // binario
+      env->prev->space_after = 1;
+      t->space_after = 1;
+    } else {
+      // prefix
+      t->space_after = 0;
+    }
   } else {
     printf("OPERATORE SCONOSCIUTO :: %.*s\n", (int)tmp.size, tmp.data);
     // exit(1);
@@ -151,6 +162,9 @@ u0 formatter(Formatter *fmt) {
     case TOKEN_COMMENT_SL:
     case TOKEN_COMMENT_ML:
       format_comment(fmt, i, env);
+      break;
+    case TOKEN_MACRO_END:
+      t->newline_after = 2;
       break;
     case TOKEN_SPECIAL:
       format_special(fmt, i, env);
