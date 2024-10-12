@@ -242,19 +242,31 @@ u0 ifp(u32 i, FILE *out, char *str) {
   }
 }
 
-u0 print_formatted_code(FILE *out, Formatter *fmt) {
-  for (u32 i = 0; i < fmt->tokens.size; i++) {
-    Token *t = at(&fmt->tokens, i);
-    ifp(t->newline_before, out, "\n");
-    ifp(t->indentation, out, "  ");
-    String str = {.data = fmt->str.data + t->begin, .size = t->size};
+u0 print_formatted_code(FILE *out, Formatter *fmttr) {
+  tokenizer_env env;
+  Iter_Formatter fmt_obj = tseekres(fmttr);
+  Iter_Formatter *fmt = &fmt_obj;
+  while (!t_is_end(fmt)) {
+    Token *t = tpeekt(fmt);
+    String str = tgets_offset(fmt, 0);
     int len = str.size;
     if (len != str.size) {
       perror("len != size");
       exit(1);
     }
+    env.macro = t->type == TOKEN_MACRO_BEGIN ? 1 : env.macro;
+    env.macro = t->type == TOKEN_MACRO_END ? 0 : env.macro;
+    ifp(t->indentation, out, "  ");
     fprintf(out, "%.*s", len, str.data);
-    ifp(t->space_after, out, " ");
-    ifp(t->newline_after, out, "\n");
+    if (t->newline_after == 0) {
+      ifp(t->space_after, out, " ");
+    } else if (!env.macro) {
+      ifp(t->newline_after, out, "\n");
+    } else {
+      ifp(1, out, " ");
+      ifp(1, out, "\\");
+      ifp(1, out, "\n");
+    }
+    (u0) tgett(fmt);
   }
 }
