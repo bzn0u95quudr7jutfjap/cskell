@@ -6,9 +6,74 @@
 #include <stack.h>
 #include <string_class.h>
 
+#define from_cstr(CSTR)                                                                                                \
+  (String) { .data = CSTR, .size = sizeof(CSTR) / sizeof(CSTR[0]) - 1 }
+
 u0 set_newline(Token *t, tokenizer_env *env) {
   t->newline_before = env->prev->newline_after == 0;
   t->indentation = env->indentation;
+}
+
+// TODO disambiguare operatori binari e unari
+u8 es(String *a, String *b) { return a->size == b->size && strncmp(a->data, b->data, a->size) == 0; }
+
+u8 in(String a[], u32 len, String *b) {
+  for (u32 i = 0; i < len; i++) {
+    if (es(&a[i], b)) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+u8 is_operatore_binario(String *b) {
+  static String a[] = {from_cstr("=="), from_cstr("!="), from_cstr(">="), from_cstr("<="), from_cstr("<<"),
+                       from_cstr(">>"), from_cstr("||"), from_cstr("&&"), from_cstr("|"),  from_cstr("<"),
+                       from_cstr(">"),  from_cstr("+"),  from_cstr("-"),  from_cstr("/"),  from_cstr("=")};
+  static u32 len = sizeof(a) / sizeof(a[0]);
+  return in(a, len, b);
+}
+
+u8 is_operatore_unario(String *b) {
+  static String a[] = {
+      from_cstr("!"),
+      from_cstr("++"),
+      from_cstr("--"),
+  };
+  static u32 len = sizeof(a) / sizeof(a[0]);
+  return in(a, len, b);
+}
+
+u0 format_operator(Formatter *fmt, u32 i, tokenizer_env *env) {
+  Token *t = at(&fmt->tokens, i);
+  String tmp = {.data = fmt->str.data + t->begin, .size = t->size};
+  static String ops_ub[] = {
+      from_cstr("*"),
+      from_cstr("&"),
+  };
+  static u32 ops_ub_len = sizeof(ops_ub) / sizeof(ops_ub[0]);
+  String arrow = from_cstr("->");
+  if (es(&tmp, &arrow)) {
+    env->prev->space_after = 0;
+    t->space_after = 0;
+  } else if (is_operatore_binario(&tmp)) {
+    env->prev->space_after = 1;
+    t->space_after = 1;
+  } else if (is_operatore_unario(&tmp)) {
+    if (strncmp(tmp.data, "++", tmp.size) == 0 || strncmp(tmp.data, "--", tmp.size) == 0) {
+      if (env->prev->type == TOKEN_IDENTIFIER) {
+        env->prev->space_after = 1;
+      } else {
+        t->space_after = 0;
+      }
+    } else {
+      env->prev->space_after = 1;
+      t->space_after = 1;
+    }
+  } else {
+    printf("OPERATORE SCONOSCIUTO :: %.*s\n", (int)tmp.size, tmp.data);
+    // exit(1);
+  }
 }
 
 u0 format_comment(Formatter *fmt, u32 i, tokenizer_env *env) {
@@ -34,11 +99,11 @@ u0 format_special(Formatter *fmt, u32 i, tokenizer_env *env) {
     break;
   case '.':
     env->prev->space_after = 0;
-    t->space_before = 0;
     t->space_after = 0;
     break;
   case ';':
     set_newline(t, env);
+    env->prev->space_after = 0;
     t->space_after = 1;
     break;
   case ',':
@@ -46,12 +111,14 @@ u0 format_special(Formatter *fmt, u32 i, tokenizer_env *env) {
     t->space_after = 1;
     break;
   case '(':
-    env->prev->space_before = 0;
-    env->prev->space_after = 0;
+    if (env->prev->type != TOKEN_OPERATOR && !is_operatore_binario(&tmp)) {
+      env->prev->space_after = 0;
+    }
+    t->space_after = 0;
     break;
   case ')':
-    env->prev->space_before = 0;
     env->prev->space_after = 0;
+    t->space_after = 0;
     break;
   default:
     break;
@@ -69,6 +136,9 @@ u0 formatter(Formatter *fmt) {
     switch (t->type) {
     case TOKEN_IDENTIFIER:
       t->space_after = 1;
+      break;
+    case TOKEN_OPERATOR:
+      format_operator(fmt, i, env);
       break;
     case TOKEN_COMMENT_SL:
     case TOKEN_COMMENT_ML:
@@ -95,7 +165,6 @@ u0 print_formatted_code(FILE *out, Formatter *fmt) {
     Token *t = at(&fmt->tokens, i);
     ifp(t->newline_before, out, "\n");
     ifp(t->indentation, out, "  ");
-    ifp(t->space_before, out, " ");
     String str = {.data = fmt->str.data + t->begin, .size = t->size};
     int len = str.size;
     if (len != str.size) {
