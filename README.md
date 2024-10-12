@@ -4,7 +4,7 @@
 
 ## Descrizione　「記述」
 
-cskell trasforma codice (attualmente solo c) in haskell-style.
+cskell trasforma codice (attualmente solo c) in haskell-style.<br>
 cskellはハスケルスタイルに入力コード（Cだけ）を変える。
 
 
