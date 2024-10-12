@@ -169,10 +169,24 @@ u0 format_special(Iter_Formatter *fmt, tokenizer_env *env) {
 }
 
 u0 format_macro_begin(Iter_Formatter *fmt, tokenizer_env *env) {
+  static String inc = from_cstr("include");
   if (env->prev != NULL) {
     env->prev->newline_after = env->prev->type == TOKEN_MACRO_END ? 0 : 2;
   }
   env->indentation += 1;
+  Token *t = tseekcur(fmt, 1);
+  t->space_after = 1;
+  String macrocmd = tgets_offset(fmt, 0);
+  if (es(&macrocmd, &inc)) {
+    t = tseekcur(fmt, 1);
+    while (t->type != TOKEN_MACRO_END) {
+      t->space_after = 0;
+      t->newline_before = 0;
+      t->newline_after = 0;
+      t = tseekcur(fmt, 1);
+    }
+    tseekcur(fmt, -1);
+  }
 }
 
 u0 formatter(Formatter *fmttr) {
