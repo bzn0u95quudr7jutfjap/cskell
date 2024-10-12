@@ -44,15 +44,21 @@ u8 is_operatore_unario(String *b) {
   return in(a, len, b);
 }
 
-u0 format_operator(Formatter *fmt, u32 i, tokenizer_env *env) {
-  Token *t = at(&fmt->tokens, i);
-  String tmp = {.data = fmt->str.data + t->begin, .size = t->size};
-  static String ops_ub[] = {
+u8 is_operatore_ambiguo(String *b) {
+  static String a[] = {
       from_cstr("*"),
       from_cstr("&"),
   };
-  static u32 ops_ub_len = sizeof(ops_ub) / sizeof(ops_ub[0]);
+  static u32 len = sizeof(a) / sizeof(a[0]);
+  return in(a, len, b);
+}
+
+u0 format_operator(Formatter *fmt, u32 i, tokenizer_env *env) {
+  Token *t = at(&fmt->tokens, i);
+  String tmp = {.data = fmt->str.data + t->begin, .size = t->size};
   String arrow = from_cstr("->");
+  String inc = from_cstr("++");
+  String dec = from_cstr("--");
   if (es(&tmp, &arrow)) {
     env->prev->space_after = 0;
     t->space_after = 0;
@@ -60,7 +66,7 @@ u0 format_operator(Formatter *fmt, u32 i, tokenizer_env *env) {
     env->prev->space_after = 1;
     t->space_after = 1;
   } else if (is_operatore_unario(&tmp)) {
-    if (strncmp(tmp.data, "++", tmp.size) == 0 || strncmp(tmp.data, "--", tmp.size) == 0) {
+    if (es(&tmp, &inc) || es(&tmp, &dec)) {
       if (env->prev->type == TOKEN_IDENTIFIER) {
         env->prev->space_after = 1;
       } else {
