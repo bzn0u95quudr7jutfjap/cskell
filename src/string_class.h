@@ -56,8 +56,6 @@ void String_delete(String *str);
 typedef struct {
   String *str;
   u32 idx;
-  u32 is_end;
-  char val;
 } Iter_String;
 
 Iter_String sseekres(String *stream);
@@ -65,6 +63,7 @@ char sgetc(Iter_String *stream);
 char speekc(Iter_String *stream);
 char speekoffset(Iter_String *stream, int o);
 void sseekcur(Iter_String *stream, i32 o);
+u8 s_is_end(Iter_String *stream);
 
 typedef struct {
   Formatter *fmt;

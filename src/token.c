@@ -177,7 +177,7 @@ u0 tokenizer(Formatter *stream_string) {
   static u32 is_push_array_len = sizeof(is_push_array) / sizeof(*is_push_array);
 
   char c = EOF;
-  while ((c = speekc(stream)) != EOF) {
+  while (!s_is_end(stream)) {
     for (u32 i = 0; i < is_push_array_len; i++) {
       if (is_push_array[i].is_type(stream, &env)) {
         is_push_array[i].push_token(tokens, stream, &env);

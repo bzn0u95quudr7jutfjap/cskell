@@ -76,11 +76,9 @@ Iter_String sseekres(String *str) {
   return i;
 }
 
-char speekc(Iter_String *stream) {
-  char *c = at(stream->str, stream->idx);
-  stream->is_end = c == NULL;
-  return c == NULL ? EOF : *c;
-}
+u8 s_is_end(Iter_String *stream) { return !(0 <= stream->idx && stream->idx < stream->str->size); }
+
+char speekc(Iter_String *stream) { return s_is_end(stream) ? EOF : *at(stream->str, stream->idx); }
 
 char sgetc(Iter_String *stream) {
   char c = speekc(stream);
