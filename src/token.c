@@ -62,7 +62,7 @@ u0 push_comment_sline(Stack_Token *tokens, Iter_String *stream, tokenizer_env *e
   push(tokens, ((Token){.begin = stream->idx, .size = 0, .type = TOKEN_COMMENT_SL}));
   Token *t = at(tokens, -1);
   char c;
-  while ((c = sgetc(stream)) != '\n' && c != EOF) {
+  while (!s_is_end(stream) && (c = sgetc(stream)) != '\n') {
     t->size++;
   }
 }
@@ -71,10 +71,10 @@ u0 push_comment_mline(Stack_Token *tokens, Iter_String *stream, tokenizer_env *e
   push(tokens, ((Token){.begin = stream->idx, .size = 0, .type = TOKEN_COMMENT_ML}));
   Token *t = at(tokens, -1);
   char c;
-  while ((c = sgetc(stream)) != EOF && !(c == '*' && speekc(stream) == '/')) {
+  while (!s_is_end(stream) && !((c = sgetc(stream)) == '*' && speekc(stream) == '/')) {
     t->size++;
   }
-  if (c != EOF) {
+  if (!s_is_end(stream)) {
     t->size += 2;
     sgetc(stream);
   }
