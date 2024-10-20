@@ -103,7 +103,7 @@ u0 push_string(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
   Token *t = at(tokens, -1);
   char delimiter = sgetc(stream);
   char c;
-  while ((c = sgetc(stream)) != EOF && c != delimiter && c != '\n') {
+  while (!s_is_end(stream) && (c = sgetc(stream)) != delimiter && c != '\n') {
     t->size++;
     if (c == '\\') {
       t->size++;
