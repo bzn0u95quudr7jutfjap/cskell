@@ -15,8 +15,11 @@ String file_get_contents(char *file) {
   if (stream == NULL) {
     return tmp;
   }
-  while ((c = fgetc(stream)) != EOF) {
-    push(&tmp, c);
+  fseek(stream, 0, SEEK_END);
+  u32 len = ftell(stream);
+  fseek(stream, 0, SEEK_SET);
+  for (u32 i = 0; i < len; i++) {
+    push(&tmp, fgetc(stream));
   }
   fclose(stream);
   return tmp;
