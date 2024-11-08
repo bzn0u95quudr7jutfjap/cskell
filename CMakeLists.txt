@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(cskell)
 
 set(compileflags -xc -Isrc)
@@ -19,11 +19,9 @@ foreach(f a IN ZIP_LISTS functions args)
 endforeach()
 
 set(cffile "${PROJECT_SOURCE_DIR}/compile_flags.txt")
-if(NOT EXISTS ${cffile})
-  list(JOIN compileflags "\n" compileflags)
-  write_file(${cffile} "${compileflags}")
-  message(STATUS "Generato il ${cffile}")
-endif()
+list(JOIN compileflags "\n" compileflags)
+write_file(${cffile} "${compileflags}")
+message(STATUS "Generato il ${cffile}")
 #message(FATAL_ERROR "${compileflags}")
 
 include_directories(src/)

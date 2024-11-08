@@ -21,7 +21,20 @@
   }                                                                                                                    \
   int var_name_test_##testname##_force_semicolon_at_macro_end
 
-make_test_token(token_prova, "", {});
+testdata token_prova() {
+  char *o[] = {""};
+  return (testdata){
+      .name = "token_prova",
+      .code = CODE_NOT_RUN,
+      .vtable = functions_test_tokenizer,
+      .tokenizer =
+          {
+              .function = tokenizer,
+              .input = {.str = from_cstr("")},
+              .atteso = ss_ca(o, 0),
+          },
+  };
+}
 
 make_test_token(token_variabile_strana, "int _a1_bc3;", {"int", "_a1_bc3", ";"});
 make_test_token(token_tipo_strano, "_uint32_t a;", {"_uint32_t", "a", ";"});
