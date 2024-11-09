@@ -27,9 +27,12 @@ typedef struct {
   u32 indentation;
   u8 newline_after : 2;
   u8 space_after : 1;
+  u8 definition : 1;
 } Token;
 
 typedef struct {
+  u8 definitionspace;
+  u8 globalspace;
   u8 macro : 1;
   u32 indentation;
   Token *prev;

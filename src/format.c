@@ -39,6 +39,8 @@ u0 set_newline(Token *t, tokenizer_env *env) {
   t->indentation = env->indentation;
 }
 
+u8 in_definitionspace(tokenizer_env *env) { return env->globalspace == 0 && 0 < env->definitionspace; }
+
 u8 es(String *a, String *b) { return a->size == b->size && strncmp(a->data, b->data, a->size) == 0; }
 
 u8 in(String a[], u32 len, String *b) {
@@ -54,7 +56,7 @@ u8 is_operatore_binario(String *b) {
   static String a[] = {from_cstr("=="), from_cstr("!="), from_cstr(">="), from_cstr("<="), from_cstr("<<"),
                        from_cstr(">>"), from_cstr("||"), from_cstr("&&"), from_cstr("|"),  from_cstr("<"),
                        from_cstr(">"),  from_cstr("+"),  from_cstr("-"),  from_cstr("/"),  from_cstr("="),
-                       from_cstr("##"), from_cstr("?"),  from_cstr(":")};
+                       from_cstr("##"), from_cstr("?"),  from_cstr(":"),  from_cstr("%")};
   static u32 len = sizeof(a) / sizeof(a[0]);
   return in(a, len, b);
 }
@@ -128,12 +130,50 @@ u0 format_comment(Iter_Formatter *fmt, tokenizer_env *env) {
   t->newline_after = 1;
 }
 
+u0 print_debug(Iter_Formatter *fmt, i32 o) {
+  Token *tt = tpeekoffset(fmt, o);
+  String s = tt == NULL ? from_cstr("(NULL)") : tgets_offset(fmt, o);
+  fprintf(stderr, "A[%4d][def: %3d]: %.*s\n", fmt->idx + o, tt == NULL ? -1 : tt->definition, (i32)s.size, s.data);
+}
+
+u0 print_str_debug(char *a) { fprintf(stderr, "%s\n", a); }
+
 u0 format_special(Iter_Formatter *fmt, tokenizer_env *env) {
   Token *t = tpeekt(fmt);
+  Token *t1, *t2, *t3;
   String tmp = tgets_offset(fmt, 0);
+  String tmp1, tmp2, tmp3, tmp4;
+  String equalop = from_cstr("=");
+  String evbegin = from_cstr("(");
+  String evend = from_cstr(")");
   char c = *at(&tmp, 0);
   switch (c) {
   case '{':
+    t3 = tpeekoffset(fmt, -3);
+    tmp3 = t3 == NULL ? from_cstr("") : tgets_offset(fmt, -3);
+    t2 = tpeekoffset(fmt, -2);
+    tmp2 = t2 == NULL ? from_cstr("") : tgets_offset(fmt, -2);
+    t1 = tpeekoffset(fmt, -1);
+    tmp1 = t1 == NULL ? from_cstr("") : tgets_offset(fmt, -1);
+    u8 casting = (es(&tmp3, &evbegin) && t2 != NULL && t2->type == TOKEN_IDENTIFIER && es(&tmp1, &evend));
+    u8 in_definition = 0;
+    in_definition = in_definition || in_definitionspace(env);
+    in_definition = in_definition || (t1 != NULL && t1->type == TOKEN_OPERATOR && es(&tmp1, &equalop));
+    in_definition = in_definition || casting;
+    if (in_definition) {
+      env->definitionspace += 1;
+      env->globalspace = 0;
+    }
+    if (casting) {
+      Token *t4 = tpeekoffset(fmt, -4);
+      if (t4 != NULL) {
+        t4->newline_after = 1;
+        t3->indentation = env->indentation + 1;
+      }
+    }
+    if (in_definition) {
+      t->definition = 1;
+    }
     env->indentation += 1;
     set_newline(t, env);
     t->space_after = 1;
@@ -142,8 +182,17 @@ u0 format_special(Iter_Formatter *fmt, tokenizer_env *env) {
     set_newline(t, env);
     env->indentation += -(env->indentation > 0);
     t->newline_after = env->indentation == 0 ? 2 : 1;
+    if (in_definitionspace(env)) {
+      env->definitionspace += -(env->definitionspace > 0);
+      t->definition = 1;
+    }
     break;
   case '.':
+    if (in_definitionspace(env)) {
+      env->prev->space_after = 1;
+      t->space_after = 0;
+      break;
+    }
     env->prev->space_after = 0;
     t->space_after = 0;
     break;
@@ -151,6 +200,9 @@ u0 format_special(Iter_Formatter *fmt, tokenizer_env *env) {
     if (env->indentation == 0) {
       if (env->prev != NULL) {
         env->prev->space_after = 0;
+        env->prev->newline_after = 0;
+        set_newline(t, env);
+        t->indentation = 1;
       }
       t->newline_after = 2;
     } else {
@@ -160,11 +212,19 @@ u0 format_special(Iter_Formatter *fmt, tokenizer_env *env) {
     }
     break;
   case ',':
+    if (in_definitionspace(env)) {
+      set_newline(t, env);
+      t->space_after = 1;
+      break;
+    }
     env->prev->space_after = 0;
     t->space_after = 1;
     break;
   case '[':
   case '(':
+    if (in_definitionspace(env)) {
+      env->globalspace = 1;
+    }
     if (env->prev != NULL && env->prev->type != TOKEN_OPERATOR && !is_operatore_binario(&tmp)) {
       env->prev->space_after = 0;
     }
@@ -177,11 +237,25 @@ u0 format_special(Iter_Formatter *fmt, tokenizer_env *env) {
     break;
   case ']':
   case ')':
-    env->prev->space_after = 0;
-    t->space_after = 1;
+    if (env->definitionspace > 0) {
+      env->globalspace = 0;
+    }
+    if (env->prev != NULL) {
+      if (env->prev->definition == 1) {
+        env->prev->newline_after = 1;
+        t->indentation = env->prev->indentation;
+        t->newline_after = 0;
+      } else {
+        env->prev->space_after = 0;
+        t->space_after = 0;
+      }
+    }
     break;
   default:
     break;
+  }
+  if (in_definitionspace(env)) {
+    t->definition = 1;
   }
 }
 
@@ -205,6 +279,18 @@ u0 format_macro_begin(Iter_Formatter *fmt, tokenizer_env *env) {
   }
 }
 
+u0 format_identifier(Iter_Formatter *fmt, tokenizer_env *env) {
+  Token *t = tpeekt(fmt);
+  Token *t1 = tpeekoffset(fmt, -1);
+  String blockend = from_cstr("}");
+  String tmp1 = t1 == NULL ? from_cstr("") : tgets_offset(fmt, -1);
+  if (es(&tmp1, &blockend)) {
+    env->prev->newline_after = 0;
+    env->prev->space_after = 1;
+  }
+  t->space_after = 1;
+}
+
 u0 formatter(Formatter *fmttr) {
   tokenizer_env env_obj = {.prev = NULL};
   tokenizer_env *env = &env_obj;
@@ -217,7 +303,7 @@ u0 formatter(Formatter *fmttr) {
     }
     switch (t->type) {
     case TOKEN_IDENTIFIER:
-      t->space_after = 1;
+      format_identifier(fmt, env);
       break;
     case TOKEN_OPERATOR:
       format_operator(fmt, env);
