@@ -1,0 +1,170 @@
+token_prova
+""
+
+
+
+token_assegnazione
+"int a = 12;"
+"int" "a" "=" "12" ";"
+word word operator_binary number end_of_line
+
+token_variabile_strana
+"int _a1_bc3;"
+"int" "_a1_bc3" ";"
+word word end_of_line
+
+token_tipo_strano
+"_uint32_t a;" 
+"_uint32_t" "a" ";"
+word word end_of_line
+
+token_variabile_strana_tipo_strano
+"_uint32_t _a1_bc3;" 
+"_uint32_t" "_a1_bc3" ";"
+word word end_of_line
+
+token_variabile
+"int a = 12;" 
+"int" "a" "=" "12" ";"
+word word operator_binary number end_of_line
+
+token_variabile_binary
+"int a = 0b010;" 
+"int" "a" "=" "0b010" ";"
+word word operator_binary number end_of_line
+
+token_variabile_octal
+"int a = 010;" 
+"int" "a" "=" "010" ";"
+word word operator_binary number end_of_line
+
+token_variabile_hex
+"int a = 0xdeadBeef;" 
+"int" "a" "=" "0xdeadBeef" ";"
+word word operator_binary number end_of_line
+
+token_variabile_negative
+"int a = -12;" 
+"int" "a" "=" "-" "12" ";"
+word word operator_binary operator_binary number end_of_line
+
+token_variabile_long
+"long a = 01L;" 
+"long" "a" "=" "01L" ";"
+word word operator_binary number end_of_line
+
+token_variabile_double
+"double a = 12.34;" 
+"double" "a" "=" "12" "." "34" ";"
+word word operator_binary number operator_attribute number end_of_line
+
+token_variabile_float
+"float a = 12.34f;" 
+"float" "a" "=" "12" "." "34f" ";"
+word word operator_binary number operator_attribute number end_of_line
+
+token_variabile_float_dot
+"float a = .34f;" 
+"float" "a" "=" "." "34f" ";"
+word word operator_binary operator_attribute number end_of_line
+
+token_variabile_float_dot_negative
+"float a = -.34f;" 
+"float" "a" "=" "-" "." "34f" ";"
+word word operator_binary operator_binary operator_attribute number end_of_line
+
+token_operatori_doppi
+"int a = 0; a += 1; a = a >= 0;" 
+"int" "a" "=" "0" ";" "a" "+=" "1" ";" "a" "=" "a" ">=" "0" ";"
+word word operator_binary number end_of_line word operator_binary number end_of_line word operator_binary word operator_binary number end_of_line
+
+token_stringhe
+"char * a = \"int o a = 12 ;\";" 
+"char" "*" "a" "=" "\"int o a = 12 ;\"" ";"
+word operator_binary word operator_binary string end_of_line
+
+token_stringhe_incomplete
+"char * a = \"int o a = 12 ;\nint b = 11;" 
+"char" "*" "a" "=" "\"int o a = 12 ;" "int" "b" "=" "11" ";"
+word operator_binary word operator_binary string word word operator_binary number end_of_line
+
+token_stringhe_escape
+"char * a = \"char * a = \\\"12\\\" ;\";" 
+"char" "*" "a" "=" "\"char * a = \\\"12\\\" ;\"" ";"
+word operator_binary word operator_binary string end_of_line
+
+token_char
+"char a = 'a';" 
+"char" "a" "=" "'a'" ";"
+word word operator_binary string end_of_line
+
+token_char_escape
+"char a = '\\'';" 
+"char" "a" "=" "'\\''" ";"
+word word operator_binary string end_of_line
+
+token_commenti_monolinea
+"int a; // int a = 12;\nint b;" 
+"int" "a" ";" "// int a = 12;" "int" "b" ";"
+word word end_of_line comment_sl word word end_of_line
+
+token_commenti_monolinea_senza_newline
+"int a; // int a = 12;" 
+"int" "a" ";" "// int a = 12;"
+word word end_of_line comment_sl
+
+token_commenti_multilinea
+"int a; /* int a = 12;\nint b;*/ int c;" 
+"int" "a" ";" "/* int a = 12;\nint b;*/" "int" "c" ";"
+word word end_of_line comment_ml word word end_of_line
+
+token_commenti_multilinea_senza_terminatore
+"int a; /* int a = 12;\nint b;" 
+"int" "a" ";" "/* int a = 12;\nint b;"
+word word end_of_line comment_ml
+
+token_macro_semplice
+"#define a 0\n"
+"#define" "a" "0" ""
+macro_begin word number macro_end
+
+token_macro_semplice_senza_newline
+"#define a 0"
+"#define" "a" "0"
+macro_begin word number
+
+token_macro_semplice_con_concatenazione
+"#define a a##a\n" 
+"#define" "a" "a" "##" "a" ""
+macro_begin word word operator_binary word macro_end
+
+token_macro_semplice_con_concatenazione_con_nomi_strani
+"#define a a_##a\n" 
+"#define" "a" "a_" "##" "a" ""
+macro_begin word word operator_binary word macro_end
+
+token_macro_funzionale_semplice
+"#define a() a\n" 
+"#define" "a" "(" ")" "a" ""
+macro_begin word expr_begin expr_end word macro_end
+
+token_macro_funzionale_piu_complessa
+"#define count(a) (sizeof(a)/sizeof(*a))\n" 
+"#define" "count" "(" "a" ")" "(" "sizeof" "(" "a" ")" "/" "sizeof" "(" "*" "a" ")" ")" ""
+macro_begin word expr_begin word expr_end expr_begin word expr_begin word expr_end operator_binary word expr_begin operator_ambiguous word expr_end expr_end macro_end
+
+token_macro_funzionale_stringify
+"#define a(A) int A = #A;\n" 
+"#define" "a" "(" "A" ")" "int" "A" "=" "#" "A" ";" ""
+macro_begin word expr_begin word expr_end word word operator_binary operator_unary word end_of_line macro_end
+
+token_macro_test_codice_serio
+"#include <fumo.h>\n" "\n" "u32 deltasigma(i32 a, i32 b){\n" "  i32 sum = a + b;\n" "\treturn 0 < sum ? sum : 0;\n" "}\n"
+"#include" "<fumo.h>" "" "u32" "deltasigma" "(" "i32" "a" "," "i32" "b" ")" "{" "i32" "sum" "=" "a" "+" "b" ";" "return" "0" "<" "sum" "?" "sum" ":" "0" ";" "}"
+macro_begin string macro_end word word expr_begin word word coma word word expr_end block_begin word word operator_binary word operator_binary word end_of_line word number operator_binary word operator_binary word operator_binary number end_of_line block_end
+
+token_dichiarazione_array
+"int a[] = {0,1,2,3,4,5,6,7};"
+"int" "a" "[" "]" "=" "{" "0" "," "1" "," "2" "," "3" "," "4" "," "5" "," "6" "," "7" "}" ";"
+word word array_i_begin array_i_end operator_binary block_begin number coma number coma number coma number coma number coma number coma number coma number block_end end_of_line
+

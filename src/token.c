@@ -1,192 +1,377 @@
-#include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "stack/stack.h"
+#include "string_class.h"
 #include <stack.h>
-#include <string_class.h>
 
-u8 is_any_of(char c, size_t size, const char cs[]) {
-  for (size_t i = 0; i < size; i++) {
-    if (c == cs[i]) {
-      return true;
-    }
-  }
-  return false;
-}
+// ================================================================================
+// TOKENIZER
+// ================================================================================
 
-#define DEFINE_CSET(NAME, CSET)                                                                                        \
-  bool NAME(char c) {                                                                                                  \
-    static const char *const charset = CSET;                                                                           \
-    return is_any_of(c, strlen(charset), charset);                                                                     \
-  }
-
-DEFINE_CSET(is_white, " \n\t")
-DEFINE_CSET(is_special, "{}()[].;,")
-DEFINE_CSET(is_string_delimiter, "'\"")
-DEFINE_CSET(is_operator, "+-*/%!=&|^><?:#")
-
-bool is_name_first(char c) { return (c == '_') || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'); }
-bool is_name(char c) { return is_name_first(c) || ('0' <= c && c <= '9'); }
-bool is_number1_first(char c) { return ('0' <= c && c <= '9'); }
-bool is_number1(char c) {
-  return is_number1_first(c) || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F') || c == 'L' || c == 'x' || c == 'X';
-}
-
-u0 push_macro_begin(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
-  push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_MACRO_BEGIN}));
-  sgetc(stream);
-}
-
-u0 push_macro_end(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
-  push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_MACRO_END}));
-  sgetc(stream);
-}
-
-u0 push_identifier(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
-  push(tokens, ((Token){.begin = stream->idx, .size = 0, .type = TOKEN_IDENTIFIER}));
-  Token *t = at(tokens, -1);
-  while (is_name(sgetc(stream))) {
-    t->size++;
-  }
-  sseekcur(stream, -1);
-}
-
-u0 push_special(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
-  push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_SPECIAL}));
-  Token *t = at(tokens, -1);
-  sgetc(stream);
-}
-
-u0 push_comment_sline(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
-  push(tokens, ((Token){.begin = stream->idx, .size = 0, .type = TOKEN_COMMENT_SL}));
-  Token *t = at(tokens, -1);
-  char c;
-  while (!s_is_end(stream) && (c = sgetc(stream)) != '\n') {
-    t->size++;
-  }
-}
-
-u0 push_comment_mline(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
-  push(tokens, ((Token){.begin = stream->idx, .size = 0, .type = TOKEN_COMMENT_ML}));
-  Token *t = at(tokens, -1);
-  char c;
-  while (!s_is_end(stream) && !((c = sgetc(stream)) == '*' && speekc(stream) == '/')) {
-    t->size++;
-  }
-  if (!s_is_end(stream)) {
-    t->size += 2;
-    sgetc(stream);
-  }
-}
-
-u0 push_operator(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
-  push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_OPERATOR}));
-  sgetc(stream);
-  if (is_operator(speekc(stream))) {
-    at(tokens, -1)->size++;
-    sgetc(stream);
-  }
-}
-
-u0 push_number(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
-  push(tokens, ((Token){.begin = stream->idx, .size = 0, .type = TOKEN_NUMBER}));
-  Token *t = at(tokens, -1);
-  while (is_number1(sgetc(stream))) {
-    t->size++;
-  }
-  sseekcur(stream, -1);
-}
-
-u0 push_string(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) {
-  push(tokens, ((Token){.begin = stream->idx, .size = 1, .type = TOKEN_STRING}));
-  Token *t = at(tokens, -1);
-  char delimiter = sgetc(stream);
-  char c;
-  while (!s_is_end(stream) && (c = sgetc(stream)) != delimiter && c != '\n') {
-    t->size++;
-    if (c == '\\') {
-      t->size++;
-      sgetc(stream);
-    }
-  }
-  if (c == delimiter) {
-    t->size++;
-  } else {
-    sseekcur(stream, -1);
-  }
-}
-
-u0 push_nothing(Stack_Token *tokens, Iter_String *stream, tokenizer_env *env) { sgetc(stream); }
-
-u8 is_macro_end(Iter_String *stream, tokenizer_env *env) {
-  u8 ret = env->macro && speekc(stream) == '\n' && speekoffset(stream, -1) != '\\';
-  env->macro = ret ? 0 : env->macro;
-  return ret;
-}
-
-u8 is_macro_begin(Iter_String *stream, tokenizer_env *env) {
-  u8 ret = !env->macro && speekc(stream) == '#';
-  env->macro = ret ? 1 : env->macro;
-  return ret;
-}
-
-u8 is_name_begin(Iter_String *stream, tokenizer_env *env) { return is_name_first(speekc(stream)); }
-
-u8 is_special_begin(Iter_String *stream, tokenizer_env *env) { return is_special(speekc(stream)); }
-
-u8 is_operator_begin(Iter_String *stream, tokenizer_env *env) { return is_operator(speekc(stream)); }
-
-u8 is_number_begin(Iter_String *stream, tokenizer_env *env) { return is_number1_first(speekc(stream)); }
-
-u8 is_string_begin(Iter_String *stream, tokenizer_env *env) { return is_string_delimiter(speekc(stream)); }
-
-u8 is_comment_sline_begin(Iter_String *stream, tokenizer_env *env) {
-  return speekc(stream) == '/' && speekoffset(stream, 1) == '/';
-}
-u8 is_comment_mline_begin(Iter_String *stream, tokenizer_env *env) {
-  return speekc(stream) == '/' && speekoffset(stream, 1) == '*';
-}
-
-u8 is_otherwise(Iter_String *stream, tokenizer_env *env) { return 1; }
-
-typedef u8 (*func_is_type)(Iter_String *, tokenizer_env *);
-typedef u0 (*func_push_token)(Stack_Token *, Iter_String *, tokenizer_env *);
 typedef struct {
-  func_is_type is_type;
-  func_push_token push_token;
-} is_push_struct;
+  TokenType type;
+  u32       size;
+  char     *data;
+} TokenPattern;
 
-u0 tokenizer(Formatter *stream_string) {
-  Iter_String stream_string_obj = sseekres(&stream_string->str);
-  Stack_Token *tokens = &stream_string->tokens;
-  Iter_String *stream = &stream_string_obj;
-  tokenizer_env env = {};
-  static is_push_struct is_push_array[] = {
-      {.is_type = is_macro_end, .push_token = push_macro_end},
-      {.is_type = is_macro_begin, .push_token = push_macro_begin},
-      {.is_type = is_name_begin, .push_token = push_identifier},
-      {.is_type = is_special_begin, .push_token = push_special},
-      {.is_type = is_comment_sline_begin, .push_token = push_comment_sline},
-      {.is_type = is_comment_mline_begin, .push_token = push_comment_mline},
-      {.is_type = is_operator_begin, .push_token = push_operator},
-      {.is_type = is_number_begin, .push_token = push_number},
-      {.is_type = is_string_begin, .push_token = push_string},
-      {.is_type = is_otherwise, .push_token = push_nothing},
-  };
-  static u32 is_push_array_len = sizeof(is_push_array) / sizeof(*is_push_array);
+#define pattern(t, str)                                                                                                \
+  { .type = t, .size = sizeof(str) - 1, .data = str }
 
-  char c = EOF;
-  while (!s_is_end(stream)) {
-    for (u32 i = 0; i < is_push_array_len; i++) {
-      if (is_push_array[i].is_type(stream, &env)) {
-        is_push_array[i].push_token(tokens, stream, &env);
-        break;
-      }
+Token *gett(CodeTokens *code) {
+  u32    size   = code->tokens.size;
+  Token *tokens = code->tokens.data;
+  return size < count(code->tokens.data) ? &tokens[size] : NULL;
+}
+
+u8 parse_word(CodeTokens *codetokens) {
+  Token *t    = gett(codetokens);
+  u32    i    = codetokens->iter;
+  u32    size = codetokens->codice.size;
+  char  *code = codetokens->codice.data;
+  char   c    = code[i];
+  u8     b;
+  if (NULL == t) {
+    return 0;
+  }
+  if (!(c == '_' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'))) {
+    return 0;
+  }
+  t->type  = TOKEN_WORD;
+  t->begin = i;
+  t->size  = 0;
+  while (i < size) {
+    c = code[i];
+    b = c == '_' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
+    b = b || (t->begin < i && '0' <= c && c <= '9');
+    if (!b) {
+      break;
+    }
+    t->size++;
+    i++;
+  }
+  return 1;
+}
+
+u8 parse_numeric(CodeTokens *codetokens) {
+  Token *t    = gett(codetokens);
+  u32    i    = codetokens->iter;
+  u32    size = codetokens->codice.size;
+  char  *code = codetokens->codice.data;
+  char   c    = code[i];
+  u8     b;
+  if (NULL == t) {
+    return 0;
+  }
+  if (!('0' <= c && c <= '9')) {
+    return 0;
+  }
+  t->type  = TOKEN_NUMBER;
+  t->begin = i;
+  t->size  = 0;
+  while (i < size) {
+    c = code[i];
+    b = ('0' <= c && c <= '9');
+    b = b || (t->begin < i && (('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')));
+    b = b || (t->begin < i && (c == 'x' || c == 'X'));
+    b = b || (t->begin < i && (c == 'u' || c == 'U'));
+    b = b || (t->begin < i && (c == 'l' || c == 'L'));
+    if (!b) {
+      break;
+    }
+    t->size++;
+    i++;
+  }
+  return 1;
+}
+
+u8 parse_comment_sline(CodeTokens *codetokens) {
+  Token *t    = gett(codetokens);
+  u32    i    = codetokens->iter;
+  u32    size = codetokens->codice.size;
+  char  *code = codetokens->codice.data;
+  if (NULL == t) {
+    return 0;
+  }
+  if (!(i + 1 < size && '/' == code[i] && '/' == code[i + 1])) {
+    return 0;
+  }
+  t->type  = TOKEN_COMMENT_SL;
+  t->begin = i;
+  t->size  = 0;
+  t->size++;
+  i++;
+  while (i < size) {
+    if ('\n' == code[i]) {
+      break;
+    }
+    t->size++;
+    i++;
+  }
+  return 1;
+}
+
+u8 parse_comment_mline(CodeTokens *codetokens) {
+  Token *t    = gett(codetokens);
+  u32    i    = codetokens->iter;
+  u32    size = codetokens->codice.size;
+  char  *code = codetokens->codice.data;
+  if (NULL == t) {
+    return 0;
+  }
+  if (!(i + 1 < size && '/' == code[i] && '*' == code[i + 1])) {
+    return 0;
+  }
+  t->type  = TOKEN_COMMENT_ML;
+  t->begin = i;
+  t->size  = 0;
+  while (i < size) {
+    t->size++;
+    i++;
+    if ('*' == code[i - 1] && '/' == code[i]) {
+      t->size++;
+      i++;
+      break;
     }
   }
-  if (env.macro) {
-    push(&stream_string->str, '\n');
-    push(tokens, ((Token){.begin = stream_string->str.size - 1, .size = 1, .type = TOKEN_MACRO_END}));
+  return 1;
+}
+
+u8 parse_include_string(CodeTokens *codetokens) {
+  Token *t    = gett(codetokens);
+  u32    i    = codetokens->iter;
+  u32    size = codetokens->codice.size;
+  char  *code = codetokens->codice.data;
+  if (NULL == t) {
+    return 0;
+  }
+  if ('<' != code[i]) {
+    return 0;
+  }
+  t->type  = TOKEN_STRING;
+  t->begin = i;
+  t->size  = 0;
+  while (i < size) {
+    t->size++;
+    i++;
+    if ('>' == code[i]) {
+      t->size++;
+      i++;
+      break;
+    }
+  }
+  return 1;
+}
+
+u8 parse_string(CodeTokens *codetokens) {
+  Token *t    = gett(codetokens);
+  u32    i    = codetokens->iter;
+  u32    size = codetokens->codice.size;
+  char  *code = codetokens->codice.data;
+  char   c;
+  char   d;
+  if (NULL == t) {
+    return 0;
+  }
+  d = code[i];
+  if (!('"' == d || '\'' == d)) {
+    return 0;
+  }
+  t->type  = TOKEN_STRING;
+  t->begin = i;
+  t->size  = 0;
+  t->size++;
+  i++;
+  while (i < size) {
+    c = code[i];
+    if (c == d) {
+      t->size++;
+      break;
+    } else if ('\n' == c) {
+      break;
+    } else if ('\\' == c) {
+      t->size++;
+      i++;
+    }
+    t->size++;
+    i++;
+  }
+  return 1;
+}
+
+u8 parse_macro_begin(CodeTokens *codetokens) {
+  Token *t    = gett(codetokens);
+  u32    i    = codetokens->iter;
+  u32    size = codetokens->codice.size;
+  char  *code = codetokens->codice.data;
+  if (NULL == t) {
+    return 0;
+  }
+  static TokenPattern ops[] = {
+      pattern(TOKEN_MACRO_BEGIN, "#include"), pattern(TOKEN_MACRO_BEGIN, "#define"),
+      pattern(TOKEN_MACRO_BEGIN, "#if"),      pattern(TOKEN_MACRO_BEGIN, "#ifdef"),
+      pattern(TOKEN_MACRO_BEGIN, "#ifndef"),  pattern(TOKEN_MACRO_BEGIN, "#else"),
+      pattern(TOKEN_MACRO_BEGIN, "#elif"),    pattern(TOKEN_MACRO_BEGIN, "#endif"),
+  };
+  static u8     ops_n = count(ops);
+  TokenPattern *ptn   = NULL;
+  u32           len;
+  for (u8 j = 0; j < ops_n; j++) {
+    ptn = &ops[j];
+    len = size - i;
+    len = len < ptn->size ? len : ptn->size;
+    if (0 == strncmp(code + i, ptn->data, len)) {
+      t->type  = ptn->type;
+      t->begin = i;
+      t->size  = ptn->size;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+u8 parse_macro_enabled(CodeTokens *codetokens) {
+  Token *t    = gett(codetokens);
+  u32    i    = codetokens->iter;
+  u32    size = codetokens->codice.size;
+  char  *code = codetokens->codice.data;
+  if (NULL == t) {
+    return 0;
+  }
+  if (0 < i && '\\' != code[i - 1] && '\n' == code[i]) {
+    t->type  = TOKEN_MACRO_END;
+    t->begin = i;
+    t->size  = 1;
+    return 1;
+  }
+  static TokenPattern ops[] = {
+      pattern(TOKEN_OPERATOR_BINARY, "##"),
+      pattern(TOKEN_OPERATOR_UNARY, "#"),
+  };
+  static u32    ops_n = count(ops);
+  TokenPattern *ptn   = NULL;
+  u32           len;
+  for (u32 j = 0; j < ops_n; j++) {
+    ptn = &ops[j];
+    len = size - i;
+    len = len < ptn->size ? len : ptn->size;
+    if (0 == strncmp(code + i, ptn->data, len)) {
+      t->type  = ptn->type;
+      t->begin = i;
+      t->size  = ptn->size;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+u8 parse_match(CodeTokens *codetokens) {
+  Token *t    = gett(codetokens);
+  u32    i    = codetokens->iter;
+  u32    size = codetokens->codice.size;
+  char  *code = codetokens->codice.data;
+  if (NULL == t) {
+    return 0;
+  }
+  static TokenPattern matches[] = {
+      pattern(TOKEN_BLOCK_BEGIN, "{"),
+      pattern(TOKEN_BLOCK_END, "}"),
+      pattern(TOKEN_EXPR_BEGIN, "("),
+      pattern(TOKEN_EXPR_END, ")"),
+      pattern(TOKEN_ARRAY_I_BEGIN, "["),
+      pattern(TOKEN_ARRAY_I_END, "]"),
+      pattern(TOKEN_COMA, ","),
+      pattern(TOKEN_END_OF_LINE, ";"),
+      pattern(TOKEN_OPERATOR_PREPOSTFIX, "++"),
+      pattern(TOKEN_OPERATOR_PREPOSTFIX, "--"),
+      pattern(TOKEN_OPERATOR_ATTRIBUTE, "."),
+      pattern(TOKEN_OPERATOR_ATTRIBUTE, "->"),
+      pattern(TOKEN_OPERATOR_BINARY, "&&"),
+      pattern(TOKEN_OPERATOR_BINARY, "||"),
+      pattern(TOKEN_OPERATOR_BINARY, ">>"),
+      pattern(TOKEN_OPERATOR_BINARY, "<<"),
+      pattern(TOKEN_OPERATOR_BINARY, "=="),
+      pattern(TOKEN_OPERATOR_BINARY, "%="),
+      pattern(TOKEN_OPERATOR_BINARY, "+="),
+      pattern(TOKEN_OPERATOR_BINARY, "-="),
+      pattern(TOKEN_OPERATOR_BINARY, "/="),
+      pattern(TOKEN_OPERATOR_BINARY, "|="),
+      pattern(TOKEN_OPERATOR_BINARY, ">="),
+      pattern(TOKEN_OPERATOR_BINARY, "<="),
+      pattern(TOKEN_OPERATOR_BINARY, "^="),
+      pattern(TOKEN_OPERATOR_BINARY, "!="),
+      pattern(TOKEN_OPERATOR_BINARY, "*="),
+      pattern(TOKEN_OPERATOR_BINARY, "&="),
+      pattern(TOKEN_OPERATOR_BINARY, "?"),
+      pattern(TOKEN_OPERATOR_BINARY, ":"),
+      pattern(TOKEN_OPERATOR_BINARY, "="),
+      pattern(TOKEN_OPERATOR_BINARY, "%"),
+      pattern(TOKEN_OPERATOR_BINARY, "+"),
+      pattern(TOKEN_OPERATOR_BINARY, "-"),
+      pattern(TOKEN_OPERATOR_BINARY, "/"),
+      pattern(TOKEN_OPERATOR_BINARY, "|"),
+      pattern(TOKEN_OPERATOR_BINARY, ">"),
+      pattern(TOKEN_OPERATOR_BINARY, "<"),
+      pattern(TOKEN_OPERATOR_BINARY, "^"),
+      pattern(TOKEN_OPERATOR_UNARY, "!"),
+      pattern(TOKEN_OPERATOR_AMBIGUOUS, "*"),
+      pattern(TOKEN_OPERATOR_AMBIGUOUS, "&"),
+  };
+  static u32    matches_n = count(matches);
+  TokenPattern *ptn;
+  u32           len;
+  for (u32 j = 0; j < matches_n; j++) {
+    ptn = &matches[j];
+    len = size - i;
+    len = len < ptn->size ? len : ptn->size;
+    if (0 == strncmp(code + i, ptn->data, len)) {
+      t->type  = ptn->type;
+      t->begin = i;
+      t->size  = ptn->size;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+u8 parse_token(CodeTokens *codetokens, TokenEnv *env) {
+  u8 b = 0;
+  b    = b || (1 == env->macro && 1 == env->include && parse_include_string(codetokens));
+  b    = b || (1 == env->macro && parse_macro_enabled(codetokens));
+  b    = b || (0 == env->macro && parse_macro_begin(codetokens));
+  b    = b || (parse_word(codetokens));
+  b    = b || (parse_numeric(codetokens));
+  b    = b || (parse_string(codetokens));
+  b    = b || (parse_comment_sline(codetokens));
+  b    = b || (parse_comment_mline(codetokens));
+  b    = b || (parse_match(codetokens));
+  if (b) {
+    static TokenPattern p = pattern(TOKEN_MACRO_BEGIN, "#include");
+    Token              *t = gett(codetokens);
+    if (t->type == p.type && t->size == p.size && 0 == strncmp(p.data, codetokens->codice.data + t->begin, p.size)) {
+      env->macro   = 1;
+      env->include = 1;
+    } else if (TOKEN_MACRO_BEGIN == t->type) {
+      env->macro = 1;
+    } else if (TOKEN_MACRO_END == t->type) {
+      env->macro   = 0;
+      env->include = 0;
+      t->size      = 0;
+    }
+    codetokens->tokens.size++;
+    codetokens->iter += 0 < t->size ? t->size : 1;
+  } else {
+    codetokens->iter++;
+  }
+  return b;
+}
+
+u0 tokenizer(CodeTokens *codetokens) {
+  TokenEnv env;
+  env.macro        = 0;
+  env.include      = 0;
+  codetokens->iter = 0;
+  while (codetokens->iter < codetokens->codice.size) {
+    parse_token(codetokens, &env);
   }
 }
