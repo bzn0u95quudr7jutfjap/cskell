@@ -1,11 +1,5 @@
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-
-#include "stack/stack.h"
-#include "string_class.h"
-#include <stack.h>
 
 u0 set_newline(Token *p, Token *t, TokenEnv *env) {
   p->newline_after = 0 < p->newline_after ? p->newline_after : 1;

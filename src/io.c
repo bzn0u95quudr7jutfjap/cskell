@@ -1,6 +1,3 @@
-#include "stack/stack.h"
-#include "string_class.h"
-#include <stack.h>
 #include <stdio.h>
 
 // ================================================================================

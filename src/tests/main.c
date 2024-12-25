@@ -1,4 +1,3 @@
-#include "../string_class.h"
 #include "testcases.c"
 #include <int.h>
 #include <stdbool.h>

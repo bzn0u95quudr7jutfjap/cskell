@@ -3,5 +3,6 @@ src/stack/*.h
 src/stack/*.c
 src/tests/*.h
 src/tests/*.c
+src/tests/*.cxx
 build/
 

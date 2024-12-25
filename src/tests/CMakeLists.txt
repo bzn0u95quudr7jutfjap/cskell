@@ -71,19 +71,16 @@ while("${testcases}" STRGREATER "")
 endwhile()
 
 set(testcases "
-#include  \"../string_class.h\"
 
-#if 0
-  typedef enum {
-    CODE_OK,
-    CODE_NOT_RUN,
-    CODE_NULL_RESULT,
-    CODE_STR_NULL_RESULT,
-    CODE_TOKEN_STR_LEN_DIFFER,
-    CODE_TOKEN_LEN_DIFFER,
-    CODE_TOKEN_STR_DIFFER,
-  } TestCode;
-#endif
+typedef enum {
+  CODE_OK,
+  CODE_NOT_RUN,
+  CODE_NULL_RESULT,
+  CODE_STR_NULL_RESULT,
+  CODE_TOKEN_STR_LEN_DIFFER,
+  CODE_TOKEN_LEN_DIFFER,
+  CODE_TOKEN_STR_DIFFER,
+} TestCode;
 
 typedef struct {
   TokenType type;

@@ -1,13 +1,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "stack/stack.h"
-#include "string_class.h"
-#include <stack.h>
-
 // ================================================================================
 // TOKENIZER
 // ================================================================================
+
+typedef struct {
+  u8    isjust;
+  Token data;
+} MaybeToken;
+
+#define Nothing                                                                                                        \
+  { .isjust = 0 }
+#define Just(obj)                                                                                                      \
+  { .isjust = 1, .data = obj }
 
 typedef struct {
   TokenType type;
@@ -18,195 +24,146 @@ typedef struct {
 #define pattern(t, str)                                                                                                \
   { .type = t, .size = sizeof(str) - 1, .data = str }
 
-Token *gett(CodeTokens *code) {
-  u32    size   = code->tokens.size;
-  Token *tokens = code->tokens.data;
-  return size < count(code->tokens.data) ? &tokens[size] : NULL;
-}
-
-u8 parse_word(CodeTokens *codetokens) {
-  Token *t    = gett(codetokens);
-  u32    i    = codetokens->iter;
-  u32    size = codetokens->codice.size;
-  char  *code = codetokens->codice.data;
-  char   c    = code[i];
-  u8     b;
-  if (NULL == t) {
-    return 0;
-  }
+static MaybeToken parse_word(u32 i, u32 size, char *code) {
+  Token t = {};
+  char  c = code[i];
+  u8    b;
   if (!(c == '_' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'))) {
-    return 0;
+    return (MaybeToken)Nothing;
   }
-  t->type  = TOKEN_WORD;
-  t->begin = i;
-  t->size  = 0;
+  t.type  = TOKEN_WORD;
+  t.begin = i;
+  t.size  = 0;
   while (i < size) {
     c = code[i];
     b = c == '_' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
-    b = b || (t->begin < i && '0' <= c && c <= '9');
+    b = b || (t.begin < i && '0' <= c && c <= '9');
     if (!b) {
       break;
     }
-    t->size++;
+    t.size++;
     i++;
   }
-  return 1;
+  return (MaybeToken)Just(t);
 }
 
-u8 parse_numeric(CodeTokens *codetokens) {
-  Token *t    = gett(codetokens);
-  u32    i    = codetokens->iter;
-  u32    size = codetokens->codice.size;
-  char  *code = codetokens->codice.data;
-  char   c    = code[i];
-  u8     b;
-  if (NULL == t) {
-    return 0;
-  }
+static MaybeToken parse_numeric(u32 i, u32 size, char *code) {
+  Token t = {};
+  char  c = code[i];
+  u8    b;
   if (!('0' <= c && c <= '9')) {
-    return 0;
+    return (MaybeToken)Nothing;
   }
-  t->type  = TOKEN_NUMBER;
-  t->begin = i;
-  t->size  = 0;
+  t.type  = TOKEN_NUMBER;
+  t.begin = i;
+  t.size  = 0;
   while (i < size) {
     c = code[i];
     b = ('0' <= c && c <= '9');
-    b = b || (t->begin < i && (('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')));
-    b = b || (t->begin < i && (c == 'x' || c == 'X'));
-    b = b || (t->begin < i && (c == 'u' || c == 'U'));
-    b = b || (t->begin < i && (c == 'l' || c == 'L'));
+    b = b || (t.begin < i && (('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')));
+    b = b || (t.begin < i && (c == 'x' || c == 'X'));
+    b = b || (t.begin < i && (c == 'u' || c == 'U'));
+    b = b || (t.begin < i && (c == 'l' || c == 'L'));
     if (!b) {
       break;
     }
-    t->size++;
+    t.size++;
     i++;
   }
-  return 1;
+  return (MaybeToken)Just(t);
 }
 
-u8 parse_comment_sline(CodeTokens *codetokens) {
-  Token *t    = gett(codetokens);
-  u32    i    = codetokens->iter;
-  u32    size = codetokens->codice.size;
-  char  *code = codetokens->codice.data;
-  if (NULL == t) {
-    return 0;
-  }
+static MaybeToken parse_comment_sline(u32 i, u32 size, char *code) {
+  Token t = {};
   if (!(i + 1 < size && '/' == code[i] && '/' == code[i + 1])) {
-    return 0;
+    return (MaybeToken)Nothing;
   }
-  t->type  = TOKEN_COMMENT_SL;
-  t->begin = i;
-  t->size  = 0;
-  t->size++;
+  t.type  = TOKEN_COMMENT_SL;
+  t.begin = i;
+  t.size  = 0;
+  t.size++;
   i++;
   while (i < size) {
     if ('\n' == code[i]) {
       break;
     }
-    t->size++;
+    t.size++;
     i++;
   }
-  return 1;
+  return (MaybeToken)Just(t);
 }
 
-u8 parse_comment_mline(CodeTokens *codetokens) {
-  Token *t    = gett(codetokens);
-  u32    i    = codetokens->iter;
-  u32    size = codetokens->codice.size;
-  char  *code = codetokens->codice.data;
-  if (NULL == t) {
-    return 0;
-  }
+static MaybeToken parse_comment_mline(u32 i, u32 size, char *code) {
+  Token t = {};
   if (!(i + 1 < size && '/' == code[i] && '*' == code[i + 1])) {
-    return 0;
+    return (MaybeToken)Nothing;
   }
-  t->type  = TOKEN_COMMENT_ML;
-  t->begin = i;
-  t->size  = 0;
+  t.type  = TOKEN_COMMENT_ML;
+  t.begin = i;
+  t.size  = 0;
   while (i < size) {
-    t->size++;
+    t.size++;
     i++;
     if ('*' == code[i - 1] && '/' == code[i]) {
-      t->size++;
+      t.size++;
       i++;
       break;
     }
   }
-  return 1;
+  return (MaybeToken)Just(t);
 }
 
-u8 parse_include_string(CodeTokens *codetokens) {
-  Token *t    = gett(codetokens);
-  u32    i    = codetokens->iter;
-  u32    size = codetokens->codice.size;
-  char  *code = codetokens->codice.data;
-  if (NULL == t) {
-    return 0;
-  }
+static MaybeToken parse_include_string(u32 i, u32 size, char *code) {
+  Token t = {};
   if ('<' != code[i]) {
-    return 0;
+    return (MaybeToken)Nothing;
   }
-  t->type  = TOKEN_STRING;
-  t->begin = i;
-  t->size  = 0;
+  t.type  = TOKEN_STRING;
+  t.begin = i;
+  t.size  = 0;
   while (i < size) {
-    t->size++;
+    t.size++;
     i++;
     if ('>' == code[i]) {
-      t->size++;
+      t.size++;
       i++;
       break;
     }
   }
-  return 1;
+  return (MaybeToken)Just(t);
 }
 
-u8 parse_string(CodeTokens *codetokens) {
-  Token *t    = gett(codetokens);
-  u32    i    = codetokens->iter;
-  u32    size = codetokens->codice.size;
-  char  *code = codetokens->codice.data;
-  char   c;
-  char   d;
-  if (NULL == t) {
-    return 0;
-  }
-  d = code[i];
+static MaybeToken parse_string(u32 i, u32 size, char *code) {
+  Token t = {};
+  char  c;
+  char  d = code[i];
   if (!('"' == d || '\'' == d)) {
-    return 0;
+    return (MaybeToken)Nothing;
   }
-  t->type  = TOKEN_STRING;
-  t->begin = i;
-  t->size  = 0;
-  t->size++;
+  t.type  = TOKEN_STRING;
+  t.begin = i;
+  t.size  = 0;
+  t.size++;
   i++;
   while (i < size) {
     c = code[i];
     if (c == d) {
-      t->size++;
+      t.size++;
       break;
     } else if ('\n' == c) {
       break;
     } else if ('\\' == c) {
-      t->size++;
+      t.size++;
       i++;
     }
-    t->size++;
+    t.size++;
     i++;
   }
-  return 1;
+  return (MaybeToken)Just(t);
 }
 
-u8 parse_macro_begin(CodeTokens *codetokens) {
-  Token *t    = gett(codetokens);
-  u32    i    = codetokens->iter;
-  u32    size = codetokens->codice.size;
-  char  *code = codetokens->codice.data;
-  if (NULL == t) {
-    return 0;
-  }
+static MaybeToken parse_macro_begin(u32 i, u32 size, char *code) {
+  Token               t     = {};
   static TokenPattern ops[] = {
       pattern(TOKEN_MACRO_BEGIN, "#include"), pattern(TOKEN_MACRO_BEGIN, "#define"),
       pattern(TOKEN_MACRO_BEGIN, "#if"),      pattern(TOKEN_MACRO_BEGIN, "#ifdef"),
@@ -221,28 +178,22 @@ u8 parse_macro_begin(CodeTokens *codetokens) {
     len = size - i;
     len = len < ptn->size ? len : ptn->size;
     if (0 == strncmp(code + i, ptn->data, len)) {
-      t->type  = ptn->type;
-      t->begin = i;
-      t->size  = ptn->size;
-      return 1;
+      t.type  = ptn->type;
+      t.begin = i;
+      t.size  = ptn->size;
+      return (MaybeToken)Just(t);
     }
   }
-  return 0;
+  return (MaybeToken)Nothing;
 }
 
-u8 parse_macro_enabled(CodeTokens *codetokens) {
-  Token *t    = gett(codetokens);
-  u32    i    = codetokens->iter;
-  u32    size = codetokens->codice.size;
-  char  *code = codetokens->codice.data;
-  if (NULL == t) {
-    return 0;
-  }
+static MaybeToken parse_macro_enabled(u32 i, u32 size, char *code) {
+  Token t = {};
   if (0 < i && '\\' != code[i - 1] && '\n' == code[i]) {
-    t->type  = TOKEN_MACRO_END;
-    t->begin = i;
-    t->size  = 1;
-    return 1;
+    t.type  = TOKEN_MACRO_END;
+    t.begin = i;
+    t.size  = 1;
+    return (MaybeToken)Just(t);
   }
   static TokenPattern ops[] = {
       pattern(TOKEN_OPERATOR_BINARY, "##"),
@@ -256,23 +207,17 @@ u8 parse_macro_enabled(CodeTokens *codetokens) {
     len = size - i;
     len = len < ptn->size ? len : ptn->size;
     if (0 == strncmp(code + i, ptn->data, len)) {
-      t->type  = ptn->type;
-      t->begin = i;
-      t->size  = ptn->size;
-      return 1;
+      t.type  = ptn->type;
+      t.begin = i;
+      t.size  = ptn->size;
+      return (MaybeToken)Just(t);
     }
   }
-  return 0;
+  return (MaybeToken)Nothing;
 }
 
-u8 parse_match(CodeTokens *codetokens) {
-  Token *t    = gett(codetokens);
-  u32    i    = codetokens->iter;
-  u32    size = codetokens->codice.size;
-  char  *code = codetokens->codice.data;
-  if (NULL == t) {
-    return 0;
-  }
+static MaybeToken parse_match(u32 i, u32 size, char *code) {
+  Token               t         = {};
   static TokenPattern matches[] = {
       pattern(TOKEN_BLOCK_BEGIN, "{"),
       pattern(TOKEN_BLOCK_END, "}"),
@@ -325,44 +270,51 @@ u8 parse_match(CodeTokens *codetokens) {
     len = size - i;
     len = len < ptn->size ? len : ptn->size;
     if (0 == strncmp(code + i, ptn->data, len)) {
-      t->type  = ptn->type;
-      t->begin = i;
-      t->size  = ptn->size;
-      return 1;
+      t.type  = ptn->type;
+      t.begin = i;
+      t.size  = ptn->size;
+      return (MaybeToken)Just(t);
     }
   }
-  return 0;
+  return (MaybeToken)Nothing;
 }
 
 u8 parse_token(CodeTokens *codetokens, TokenEnv *env) {
-  u8 b = 0;
-  b    = b || (1 == env->macro && 1 == env->include && parse_include_string(codetokens));
-  b    = b || (1 == env->macro && parse_macro_enabled(codetokens));
-  b    = b || (0 == env->macro && parse_macro_begin(codetokens));
-  b    = b || (parse_word(codetokens));
-  b    = b || (parse_numeric(codetokens));
-  b    = b || (parse_string(codetokens));
-  b    = b || (parse_comment_sline(codetokens));
-  b    = b || (parse_comment_mline(codetokens));
-  b    = b || (parse_match(codetokens));
+  static TokenPattern includeptn = pattern(TOKEN_MACRO_BEGIN, "#include");
+  u8                  isinclude  = 1;
+  MaybeToken          t          = {};
+  u32                 i          = codetokens->iter;
+  u32                 size       = codetokens->codice.size;
+  char               *code       = codetokens->codice.data;
+  u8                  b          = 0;
+  // clang-format off
+  b = b || (1 == env->macro && 1 == env->include && (t = parse_include_string (i, size, code)).isjust);
+  b = b || (1 == env->macro &&                      (t = parse_macro_enabled  (i, size, code)).isjust);
+  b = b || (0 == env->macro &&                      (t = parse_macro_begin    (i, size, code)).isjust);
+  b = b ||                                          (t = parse_word           (i, size, code)).isjust;
+  b = b ||                                          (t = parse_numeric        (i, size, code)).isjust;
+  b = b ||                                          (t = parse_string         (i, size, code)).isjust;
+  b = b ||                                          (t = parse_comment_sline  (i, size, code)).isjust;
+  b = b ||                                          (t = parse_comment_mline  (i, size, code)).isjust;
+  b = b ||                                          (t = parse_match          (i, size, code)).isjust;
+  // clang-format on
   if (b) {
-    static TokenPattern p = pattern(TOKEN_MACRO_BEGIN, "#include");
-    Token              *t = gett(codetokens);
-    if (t->type == p.type && t->size == p.size && 0 == strncmp(p.data, codetokens->codice.data + t->begin, p.size)) {
+    isinclude = isinclude && t.data.type == includeptn.type;
+    isinclude = isinclude && t.data.size == includeptn.size;
+    isinclude = isinclude && 0 == strncmp(includeptn.data, code + t.data.begin, includeptn.size);
+    if (isinclude) {
       env->macro   = 1;
       env->include = 1;
-    } else if (TOKEN_MACRO_BEGIN == t->type) {
+    } else if (TOKEN_MACRO_BEGIN == t.data.type) {
       env->macro = 1;
-    } else if (TOKEN_MACRO_END == t->type) {
+    } else if (TOKEN_MACRO_END == t.data.type) {
       env->macro   = 0;
       env->include = 0;
-      t->size      = 0;
+      t.data.size  = 0;
     }
-    codetokens->tokens.size++;
-    codetokens->iter += 0 < t->size ? t->size : 1;
-  } else {
-    codetokens->iter++;
+    codetokens->tokens.data[codetokens->tokens.size++] = t.data;
   }
+  codetokens->iter += (0 == t.data.size) + t.data.size;
   return b;
 }
 
