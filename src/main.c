@@ -14,13 +14,11 @@ int main(int argc, char *argv[]) {
   CodeTokens codetokens = {};
   filegetcontents(argv[1], &codetokens);
   tokenizer(&codetokens);
-#if 1
   formatter(&codetokens);
   if (argc < 3) {
     fileputcontents_fd(stdout, &codetokens);
   } else {
     fileputcontents(argv[2], &codetokens);
   }
-#endif
   return 0;
 }

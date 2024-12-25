@@ -10,9 +10,7 @@ typedef struct _IO_FILE FILE;
 typedef enum {
   TOKEN_WORD = 1,
   TOKEN_STRING,
-  TOKEN_CHAR,
   TOKEN_NUMBER,
-  TOKEN_OPERATOR,
   TOKEN_SPECIAL,
   TOKEN_COMMENT_SL,
   TOKEN_COMMENT_ML,
@@ -35,12 +33,12 @@ typedef enum {
 
 typedef struct {
   TokenType type;
-  u32 begin;
-  u32 size;
-  u32 indentation;
-  u8 newline_after : 2;
-  u8 space_after : 1;
-  u8 definition : 1;
+  u32       begin;
+  u32       size;
+  u32       indentation;
+  u8        newline_after : 2;
+  u8        space_after   : 1;
+  u8        definition    : 1;
 } Token;
 
 typedef struct {
@@ -60,12 +58,11 @@ typedef struct {
 } CodeTokens;
 
 typedef struct {
-  u8     definitionspace;
-  u8     globalspace;
-  u8     macro   : 1;
-  u8     include : 1;
-  u32    indentation;
-  Token *t;
+  u8  definitionspace;
+  u8  globalspace;
+  u8  macro   : 1;
+  u8  include : 1;
+  u32 indentation;
 } TokenEnv;
 
 u0 tokenizer(CodeTokens *codetokens);

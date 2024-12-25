@@ -1,6 +1,5 @@
 #include "testcases.c"
 #include <int.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -16,9 +15,7 @@ char *tokentypetostring(TokenType t) {
   switch (t) {
     case TOKEN_WORD               : return "TOKEN_WORD";
     case TOKEN_STRING             : return "TOKEN_STRING";
-    case TOKEN_CHAR               : return "TOKEN_CHAR";
     case TOKEN_NUMBER             : return "TOKEN_NUMBER";
-    case TOKEN_OPERATOR           : return "TOKEN_OPERATOR";
     case TOKEN_SPECIAL            : return "TOKEN_SPECIAL";
     case TOKEN_COMMENT_SL         : return "TOKEN_COMMENT_SL";
     case TOKEN_COMMENT_ML         : return "TOKEN_COMMENT_ML";

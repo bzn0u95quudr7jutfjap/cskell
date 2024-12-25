@@ -30,23 +30,27 @@ static u0 ifp(u32 i, FILE *out, char *str) {
 }
 
 u0 fileputcontents_fd(FILE *stream, CodeTokens *codetokens) {
-  u32      size = codetokens->tokens.size;
-  TokenEnv env  = {};
+  char    *indent    = "  ";
+  char    *space     = " ";
+  char    *newline   = "\n";
+  char    *backslash = "\\";
+  u32      size      = codetokens->tokens.size;
+  TokenEnv env       = {};
   for (u32 i = 0; i < size; i++) {
     Token *t   = &codetokens->tokens.data[i];
     char  *str = &codetokens->codice.data[t->begin];
     i32    len = t->size;
     env.macro  = TOKEN_MACRO_END == t->type ? 0 : (TOKEN_MACRO_BEGIN == t->type ? 1 : env.macro);
-    ifp(t->indentation, stream, "  ");
+    ifp(t->indentation, stream, indent);
     fprintf(stream, "%.*s", len, str);
     if (t->newline_after == 0) {
-      ifp(t->space_after, stream, " ");
+      ifp(t->space_after, stream, space);
     } else if (!env.macro) {
-      ifp(t->newline_after, stream, "\n");
+      ifp(t->newline_after, stream, newline);
     } else {
-      ifp(1, stream, " ");
-      ifp(1, stream, "\\");
-      ifp(1, stream, "\n");
+      ifp(1, stream, space);
+      ifp(1, stream, backslash);
+      ifp(1, stream, newline);
     }
   }
 }

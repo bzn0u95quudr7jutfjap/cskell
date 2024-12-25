@@ -32,6 +32,7 @@ function(parsetest test str rest)
   set(types  "${types}\n")
 
 
+  set(count 0)
   splice("${strings}"  "\n" string strings)
   splice("${types}"    "\n" type   types)
   while(("${string}" STRGREATER "") OR ("${type}" STRGREATER ""))
@@ -41,6 +42,7 @@ function(parsetest test str rest)
 
     splice("${strings}" "\n" string strings)
     splice("${types}" "\n" type types)
+    math(EXPR count "${count}+1")
   endwhile()
 
   set(${test} "
@@ -53,7 +55,7 @@ function(parsetest test str rest)
           .data = ${input},
         },
       },
-      .attesi_n = count(((TokenPattern[]){${attesi}})),
+      .attesi_n = ${count},
       .attesi   = {
           ${attesi}
         }
