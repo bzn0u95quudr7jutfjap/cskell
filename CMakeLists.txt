@@ -6,12 +6,18 @@ include_directories("${CMAKE_CURRENT_LIST_DIR}/src/tests/")
 
 set(options
   --std=c23
-  -g
-  -fsanitize=address
   -Wall
   -Werror
   -Wpedantic
-  -include${CMAKE_CURRENT_LIST_DIR}/src/cskell.h
+  -include${CMAKE_CURRENT_LIST_DIR}/inc/int.h
+  -include${CMAKE_CURRENT_LIST_DIR}/inc/cskell.h
+
+  #Debug
+  -g
+  -fsanitize=address
+
+  #Release
+  #-fsanitize=safe-stack
 )
 
 add_compile_options(${options})

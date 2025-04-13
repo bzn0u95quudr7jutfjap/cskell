@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 
 u0 set_newline(Token *p, Token *t, TokenEnv *env) {
@@ -165,18 +164,6 @@ u0 formatter(CodeTokens *codetokens) {
       p->newline_after  = p->type == TOKEN_MACRO_END ? 0 : 2;
       env.indentation  += 1;
       t->space_after    = 1;
-#if 0
-      // if (es(&macrocmd, &inc)) {
-      if (0) {
-        t = iseekcur(iter, 1);
-        while (t->type != TOKEN_MACRO_END) {
-          t->space_after   = 0;
-          t->newline_after = 0;
-          t                = iseekcur(iter, 1);
-        }
-        iseekcur(iter, -1);
-      }
-#endif
       break;
     default:
       break;

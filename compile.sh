@@ -2,4 +2,4 @@
 
 DIR="build/"
 
-cmake -B "$DIR" && cmake --build "$DIR"
+CC=clang CXX=clang cmake -B "$DIR" && cmake --build "$DIR"
